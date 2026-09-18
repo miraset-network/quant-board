@@ -1,0 +1,10 @@
+README.md
+pyproject.toml
+src/daily_smta/__init__.py
+src/daily_smta/__main__.py
+src/daily_smta.egg-info/PKG-INFO
+src/daily_smta.egg-info/SOURCES.txt
+src/daily_smta.egg-info/dependency_links.txt
+src/daily_smta.egg-info/requires.txt
+src/daily_smta.egg-info/top_level.txt
+tests/test_daily_smta.py
