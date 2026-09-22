@@ -1,18 +1,31 @@
 # Token God Indexes — План імплементації (1 тиждень)
 
+## Tech Stack
+- **Backend**: Node.js + TypeScript + Express
+- **Frontend**: Next.js 14 (App Router) + TypeScript + Tailwind CSS
+- **Monorepo**: pnpm workspaces + Turborepo
+- **Data**: Nansen Query API
+- **Storage**: PostgreSQL
+
 ## Timeline: 22-28 вересня 2026
 
 ## Day 1 (Sep 22) — Foundation
 
-### Morning: Project Setup
+### Morning: Monorepo Setup
 ```bash
-# Initialize project
-npm init -y
-npm install express dotenv cors helmet
-npm install -D typescript @types/node @types/express tsx nodemon
+# Initialize pnpm workspace
+pnpm init
+mkdir -p apps/api apps/web packages/shared
 
-# Configure TypeScript
-tsc --init
+# Install backend deps
+cd apps/api && pnpm init
+pnpm add express dotenv cors helmet zod
+pnpm add -D typescript @types/node @types/express tsx nodemon
+
+# Install frontend deps
+cd ../web && pnpm init
+pnpm add next@14 react react-dom
+pnpm add -D typescript @types/react tailwindcss
 ```
 
 **Tasks**:
@@ -172,43 +185,52 @@ function shouldRebalance(current: Index, target: Index): boolean {
 
 **Deliverable**: ✅ All 3 endpoints working + persistence
 
-## Day 6 (Sep 27) — Documentation & Demo
+## Day 6 (Sep 27) — Frontend + Documentation
 
-### Morning: README
-**File**: `README.md`
+### Morning: Next.js Dashboard (TUI Style)
+**File**: `apps/web/app/page.tsx`
+
+**Components**:
+- [ ] `IndexOverview.tsx` — Total value, weekly change
+- [ ] `TokenList.tsx` — Top 20 holdings table
+- [ ] `RebalanceSignal.tsx` — Status + actions
+- [ ] `ArbitrageTable.tsx` — Opportunities
+- [ ] Live clock + API call counter
+
+**Styling**: Tailwind CSS, monospace font (JetBrains Mono), terminal colors
+
+**Tasks**:
+- [ ] Setup Next.js 14 App Router
+- [ ] Configure Tailwind with custom theme
+- [ ] Connect to `/api/index/*` endpoints
+- [ ] Auto-refresh every 30s
+
+### Afternoon: README + Recording
+**File**: `README.md` (workspace root)
 
 **Structure**:
 ```markdown
 # Token God Indexes
 ## What it does
 ## Architecture diagram
-## Quick Start
+## Quick Start (pnpm i && pnpm dev)
 ## API Reference
-## Demo
+## Dashboard Preview
 ## Contact
 ```
 
-**Tasks**:
-- [ ] Project description
-- [ ] Setup instructions (< 10 min)
-- [ ] API documentation
-- [ ] Architecture overview
-
-### Afternoon: Recording
-**Tool**: OBS Studio / Loom
-
-**Recording Plan**:
+**Recording Plan** (no narration):
 ```
-0:00 - Title slide
-0:30 - Show live API calls to Nansen
-2:00 - Display index with real data
-3:30 - Trigger rebalance, show signals
-5:00 - Show arbitrage opportunities
-6:30 - Quick architecture explanation
-8:00 - End (no narration!)
+0:00 - Title screen (ASCII art)
+0:30 - Dashboard loads with live data
+2:00 - Show index movements
+3:30 - Click rebalance signal, show actions
+5:00 - Switch to arbitrage opportunities
+6:30 - Show Nansen API call counter (1,000+)
+8:00 - End
 ```
 
-**Deliverable**: ✅ Recording ready (under 10 min, no voice)
+**Deliverable**: ✅ Recording ready (under 10 min) + Dashboard
 
 ## Day 7 (Sep 28) — Submit
 

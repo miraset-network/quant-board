@@ -1,4 +1,46 @@
-# Token God Indexes — Архітектура системи
+# Token God Indexes — Архітектура системи (Monorepo)
+
+##  System Overview
+
+```
+┌────────────────────────────────────────────────────────────────┐
+│              NEXT.JS DASHBOARD (TUI Style)                     │
+│         app/  components/  lib/api.ts                          │
+└────────────────────────────┬───────────────────────────────────┘
+                             │ HTTP (fetch)
+                             ↓
+┌────────────────────────────────────────────────────────────────┐
+│                     EXPRESS API (Backend)                       │
+│          /api/index/*  /api/arbitrage/*                        │
+└────────────────────────────┬───────────────────────────────────┘
+                             │
+        ┌────────────────────┼────────────────────┐
+        │                    │                    │
+        ↓                    ↓                    ↓
+┌───────────────┐   ┌────────────────┐   ┌────────────────┐
+│  Nansen API   │   │ Analytics Core │   │   Signals DB   │
+│    Client     │   │     Engine     │   │  (PostgreSQL)  │
+└───────┬───────┘   └────────┬───────┘   └────────┬───────┘
+        │                    │                    │
+        └────────────────────┼────────────────────┘
+                             ↓
+                   ┌───────────────────┐
+                   │  Scheduler (cron) │
+                   └───────────────────┘
+```
+
+##  Monorepo Structure
+
+```
+quant-board/
+├── apps/
+│   ├── api/                    # Backend (Express + TS)
+│   └── web/                    # Frontend (Next.js 14 + TS)
+├── packages/
+│   └── shared/                 # Shared TS types
+├── package.json                # Workspace root
+└── turbo.json                  # Turborepo pipeline
+```
 
 ##  System Overview
 
