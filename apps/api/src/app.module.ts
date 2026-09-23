@@ -1,0 +1,13 @@
+import { Module } from '@nestjs/common';
+import { AppController } from './app.controller.js';
+import { AppService } from './app.service.js';
+import { IndexModule } from './index/index.module.js';
+import { ArbitrageModule } from './arbitrage/arbitrage.module.js';
+import { NansenModule } from './nansen/nansen.module.js';
+
+@Module({
+  imports: [IndexModule, ArbitrageModule, NansenModule],
+  controllers: [AppController],
+  providers: [AppService],
+})
+export class AppModule {}
