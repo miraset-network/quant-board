@@ -11,8 +11,8 @@
     "@opencode-ai/sdk": "^1.18.32",
     "turbo": "^2.1.0"
   },
-  "packageManager": "pnpm@9.5.0",
+  "packageManager": "pnpm@12.6.0",
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   }
 }

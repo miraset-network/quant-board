@@ -14,7 +14,7 @@ Hackathon project ("Token God Indexes") for the Nansen Meridian Buildathon (Sep 
 
 ## Package managers are mixed — don't assume
 
-Root declares `pnpm@9.5.0` + pnpm workspace + turbo, but there is **no root lockfile**. `apps/api` and `apps/web` each have their own `bun.lock` (web also pins `packageManager: bun@1.4.2`; api additionally has a stray `package-lock.json`). Installs were done per-app with bun. Run scripts from inside each app directory.
+Root declares `pnpm` + pnpm workspace + turbo, but there is **no root lockfile**. `apps/api` and `apps/web` each have their own `bun.lock` (web also pins `packageManager: bun@1.4.2`; api additionally has a stray `package-lock.json`). Installs were done per-app with bun. Run scripts from inside each app directory.
 
 ## Commands
 
