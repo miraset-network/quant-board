@@ -31,6 +31,7 @@ export interface Arbitrage {
     signal: string;
     expectedReturn: string;
   }[];
+  status: 'ok' | 'no-threshold-match' | 'nansen-empty';
 }
 
 async function get<T>(path: string): Promise<T> {

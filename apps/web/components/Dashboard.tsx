@@ -93,7 +93,7 @@ export default function Dashboard() {
         </Panel>
 
         <Panel title="ARBITRAGE OPPORTUNITIES">
-          {arb?.opportunities.length ? (
+          {arb && arb.opportunities.length > 0 ? (
             <table className="w-full text-xs">
               <thead className="text-green-600">
                 <tr><th className="text-left">PAIR</th><th className="text-right">CORR</th><th className="text-right">DIV%</th><th className="text-left">SIGNAL</th><th className="text-right">EST</th></tr>
@@ -110,7 +110,13 @@ export default function Dashboard() {
                 ))}
               </tbody>
             </table>
-          ) : <p className="text-sm text-green-700">no opportunities above threshold —</p>}
+          ) : (
+            <p className="text-sm text-green-700">
+              {arb?.status === 'nansen-empty'
+                ? 'Nansen returned no index data — cannot scan pairs'
+                : 'no opportunities above threshold — corr≥0.85 · |div|≥5%'}
+            </p>
+          )}
         </Panel>
       </main>
 
