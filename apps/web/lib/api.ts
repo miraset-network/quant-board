@@ -8,6 +8,17 @@ export interface Token {
   whaleConcentration: number;
 }
 
+export interface IndexCredits {
+  includedRemaining: number | null;
+  includedLimit: number | null;
+  purchasedRemaining: number | null;
+  plan: string | null;
+  costLastCall: number | null;
+  source: 'headers' | 'account-endpoint' | 'unknown';
+  updatedAt: string;
+  totalRemaining: number | null;
+}
+
 export interface IndexState {
   indexName: string;
   lastUpdate: string;
@@ -17,6 +28,7 @@ export interface IndexState {
   status: 'ok' | 'nansen-empty' | 'nansen-error';
   source: 'nansen';
   message?: string | null;
+  credits?: IndexCredits;
 }
 
 export interface Rebalance {
@@ -61,4 +73,5 @@ export const api = {
   index: () => get<IndexState>('/api/index/current'),
   rebalance: () => get<Rebalance>('/api/index/rebalance'),
   arbitrage: () => get<Arbitrage>('/api/arbitrage/opportunities'),
+  credits: () => get<IndexCredits & { apiCalls: number; successfulCalls: number; lastError: string | null }>('/api/nansen/credits'),
 };

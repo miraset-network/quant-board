@@ -48,6 +48,18 @@ class FakeNansen {
   getCallCount() { return 1; }
   getSuccessCount() { return 1; }
   getLastError() { return null; }
+  getCredits() {
+    return {
+      includedRemaining: null,
+      includedLimit: null,
+      purchasedRemaining: null,
+      plan: null,
+      costLastCall: null,
+      source: 'unknown' as const,
+      updatedAt: new Date(0).toISOString(),
+    };
+  }
+  getAccount = vi.fn(async () => ({}));
   getOhlcvBatch = vi.fn(async () => ({ chain: 'solana', timeframe: '1d', tokens: [] }));
 }
 

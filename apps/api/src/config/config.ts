@@ -14,7 +14,7 @@ export interface AppConfigShape {
   nansen: {
     baseUrl: string;
     apiKey: string;
-    endpoints: { smartMoneyNetflow: string; tokenOhlcv: string };
+    endpoints: { smartMoneyNetflow: string; tokenOhlcv: string; account: string };
     defaults: {
       requestTimeoutMs: number;
       smartMoneyChains: string[];

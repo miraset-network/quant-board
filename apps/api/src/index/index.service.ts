@@ -1,7 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { APP_CONFIG } from '../config/config.js';
 import type { AppConfigShape } from '../config/config.js';
-import { NansenService, SmartMoneyNetflowRow } from '../nansen/nansen.service.js';
+import {
+  CreditSnapshot,
+  NansenService,
+  SmartMoneyNetflowRow,
+} from '../nansen/nansen.service.js';
 import { calcWeight, clamp01, normalizeWeights, TokenWeight } from './index.analytics.js';
 
 export type IndexStatus = 'ok' | 'nansen-empty' | 'nansen-error';
@@ -16,6 +20,7 @@ export interface IndexState {
   message: string | null;
   source: 'nansen';
   nansenRows?: SmartMoneyNetflowRow[];
+  credits: CreditSnapshot & { totalRemaining: number | null };
 }
 
 interface CacheEntry {
@@ -44,6 +49,14 @@ export class IndexService {
 
   async current(): Promise<IndexState> {
     if (this.cache && Date.now() - this.cache.at < this.ttl) return this.cache.data;
+
+    if (this.shouldRefreshCredits()) {
+      try {
+        await this.nansen.getAccount();
+      } catch {
+        /* keep previous snapshot */
+      }
+    }
 
     let tokens: TokenWeight[];
     let status: IndexStatus = 'ok';
@@ -87,6 +100,7 @@ export class IndexService {
       message,
       source: 'nansen',
       nansenRows,
+      credits: this.buildCredits(),
     };
     this.cache = { data, at: Date.now() };
     return data;
@@ -111,6 +125,28 @@ export class IndexService {
       smartMoneyScore,
       correlation,
       whaleConcentration,
+    };
+  }
+
+  private shouldRefreshCredits(): boolean {
+    const c = this.nansen.getCredits();
+    if (c.includedRemaining === null && c.purchasedRemaining === null && c.plan === null) {
+      return true;
+    }
+    const ageMs = Date.now() - new Date(c.updatedAt).getTime();
+    return ageMs > 60_000;
+  }
+
+  private buildCredits() {
+    const c = this.nansen.getCredits();
+    const totalRemaining =
+      (c.includedRemaining ?? 0) + (c.purchasedRemaining ?? 0);
+    return {
+      ...c,
+      totalRemaining:
+        c.includedRemaining !== null || c.purchasedRemaining !== null
+          ? totalRemaining
+          : null,
     };
   }
 

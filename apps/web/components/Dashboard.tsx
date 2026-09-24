@@ -68,6 +68,24 @@ export default function Dashboard() {
                 <span className="text-amber-400">{index.successfulCalls}</span>
                 <span className="text-green-700"> / {index.apiCalls} total</span>
               </p>
+              <p>
+                Credits left:{' '}
+                <span
+                  className={
+                    (index.credits?.totalRemaining ?? 0) <= 10
+                      ? 'text-red-400'
+                      : (index.credits?.totalRemaining ?? 0) <= 50
+                        ? 'text-amber-400'
+                        : 'text-cyan-300'
+                  }
+                >
+                  {index.credits?.totalRemaining ?? '—'}
+                </span>
+                <span className="text-green-700">
+                  {' '}
+                  (included {index.credits?.includedRemaining ?? '—'} / plan {index.credits?.plan ?? '—'})
+                </span>
+              </p>
               <p className="text-green-700">
                 Tokens: <span className="text-cyan-300">{index.tokens.length}</span>
               </p>
