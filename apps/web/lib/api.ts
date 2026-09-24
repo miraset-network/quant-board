@@ -13,7 +13,9 @@ export interface IndexState {
   lastUpdate: string;
   tokens: Token[];
   apiCalls: number;
-  status: 'ok' | 'nansen-empty' | 'nansen-error' | 'fallback';
+  successfulCalls: number;
+  status: 'ok' | 'nansen-empty' | 'nansen-error';
+  source: 'nansen';
   message?: string | null;
 }
 
@@ -32,9 +34,21 @@ export interface Arbitrage {
     divergence: number;
     signal: string;
     expectedReturn: string;
+    candlesUsed?: number;
+    beta?: number;
+    zScore?: number;
+    halfLifeDays?: number;
+    halfLifeOk?: boolean;
+    spreadMean?: number;
+    spreadStd?: number;
+    notionalRatio?: string;
+    hedgeNotionals?: { legA: number; legB: number };
+    exitTarget?: number;
   }[];
   status: 'ok' | 'no-threshold-match' | 'nansen-empty' | 'nansen-error';
   message?: string | null;
+  apiCalls?: number;
+  successfulCalls?: number;
 }
 
 async function get<T>(path: string): Promise<T> {

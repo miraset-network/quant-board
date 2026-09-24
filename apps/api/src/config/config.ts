@@ -14,24 +14,26 @@ export interface AppConfigShape {
   nansen: {
     baseUrl: string;
     apiKey: string;
-    endpoints: { smartMoneyFlow: string; topWallets: string; tokenGodMode: string };
+    endpoints: { smartMoneyNetflow: string; tokenOhlcv: string };
     defaults: {
-      smartMoneyFlowLimit: number;
-      topWalletsChain: string;
-      topWalletsLimit: number;
       requestTimeoutMs: number;
+      smartMoneyChains: string[];
+      smartMoneyPerPage: number;
+      smartMoneyPage: number;
+      ohlcvTimeframe: string;
+      ohlcvLookbackDays: number;
     };
   };
   index: {
     name: string;
     topN: number;
     scoring: {
-      smartMoneyWeight: number;
-      correlationWeight: number;
-      whaleConcentrationWeight: number;
-      smartMoneyBonusWeight: number;
-      smartMoneyBonusScale: number;
-      smartMoneyBonusBias: number;
+      netflowWeight: number;
+      traderCountWeight: number;
+      marketCapWeight: number;
+      scoreScaleUsd: number;
+      traderCountScale: number;
+      marketCapScaleUsd: number;
     };
     rebalance: {
       holdThresholdPct: number;
@@ -42,22 +44,21 @@ export interface AppConfigShape {
       confidenceDriftFactor: number;
       confidenceCap: number;
     };
-    fallbackTokens: FallbackToken[];
     messages: {
       nansenEmpty: string;
       nansenError: string;
-      fallbackUsed: string;
     };
   };
   arbitrage: {
     topN: number;
-    synthetic: {
-      points: number;
-      base: number;
-      stepPerToken: number;
-      stepPerBar: number;
-      noiseAmplitude: number;
-      noiseFreq: number;
+    minCandles: number;
+    statArb: {
+      zEntryThreshold: number;
+      zExitThreshold: number;
+      maxHalfLifeDays: number;
+      minCorrForCointegration: number;
+      minWindow: number;
+      maxWindow: number;
     };
   };
   thresholds: {

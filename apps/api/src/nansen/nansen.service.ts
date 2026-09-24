@@ -3,22 +3,55 @@ import { APP_CONFIG } from '../config/config.js';
 import type { AppConfigShape } from '../config/config.js';
 
 export class NansenError extends Error {
-  constructor(message: string, public readonly cause?: unknown) {
+  constructor(message: string, public readonly status?: number, public readonly cause?: unknown) {
     super(message);
     this.name = 'NansenError';
   }
 }
 
-export interface NansenQueryResult<T> {
-  data: T;
-  empty: boolean;
-  error: null | string;
+export interface SmartMoneyNetflowRow {
+  token_address: string;
+  token_symbol: string;
+  chain: string;
+  net_flow_1h_usd: number;
+  net_flow_24h_usd: number;
+  net_flow_7d_usd: number;
+  net_flow_30d_usd: number;
+  trader_count: number;
+  token_age_days: number;
+  market_cap_usd: number;
+  token_sectors?: string[];
+}
+
+export interface SmartMoneyNetflowResponse {
+  data: SmartMoneyNetflowRow[];
+  pagination?: { page: number; per_page: number; is_last_page?: boolean };
+}
+
+export interface OhlcvCandle {
+  interval_start: string;
+  open: number | null;
+  high: number;
+  low: number;
+  close: number;
+  volume: number | null;
+  volume_usd: number;
+  market_cap: { open: number; high: number; low: number; close: number };
+}
+
+export interface OhlcvBatchResponse {
+  chain: string;
+  timeframe: string;
+  tokens: { token_address: string; data: OhlcvCandle[] }[];
+  truncated?: boolean;
+  truncation_note?: string;
 }
 
 @Injectable()
 export class NansenService {
   private readonly logger = new Logger(NansenService.name);
   private callCount = 0;
+  private successCount = 0;
   private lastError: string | null = null;
 
   constructor(@Inject(APP_CONFIG) private readonly cfg: AppConfigShape) {}
@@ -27,70 +60,94 @@ export class NansenService {
     return this.callCount;
   }
 
+  getSuccessCount(): number {
+    return this.successCount;
+  }
+
   getLastError(): string | null {
     return this.lastError;
   }
 
-  private async query<T>(endpoint: string, params: Record<string, unknown> = {}): Promise<T> {
+  private async post<T>(path: string, body: Record<string, unknown>): Promise<T> {
     this.callCount++;
     this.lastError = null;
-    const url = new URL(`${this.cfg.nansen.baseUrl}${endpoint}`);
-    for (const [k, v] of Object.entries(params)) {
-      if (v === undefined || v === null) continue;
-      const str = typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean'
-        ? String(v)
-        : JSON.stringify(v);
-      url.searchParams.append(k, str);
-    }
-    this.logger.debug(`Nansen #${this.callCount} → ${url.pathname}`);
     if (!this.cfg.nansen.apiKey) {
+      this.callCount--;
       const msg = 'NANSEN_API_KEY not set';
       this.lastError = msg;
       throw new NansenError(msg);
     }
+    const url = `${this.cfg.nansen.baseUrl}${path}`;
+    this.logger.debug(`Nansen #${this.callCount} POST ${url}`);
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), this.cfg.nansen.defaults.requestTimeoutMs);
     try {
-      const res = await fetch(url.toString(), {
+      const res = await fetch(url, {
+        method: 'POST',
         headers: {
-          Authorization: `Bearer ${this.cfg.nansen.apiKey}`,
-          'x-api-key': this.cfg.nansen.apiKey,
+          apikey: this.cfg.nansen.apiKey,
           'Content-Type': 'application/json',
+          Accept: 'application/json',
         },
+        body: JSON.stringify(body),
         signal: ctrl.signal,
       });
       if (!res.ok) {
-        const msg = `Nansen API ${res.status}: ${res.statusText}`;
+        let detail = res.statusText;
+        try {
+          const j = await res.json();
+          if (j?.message) detail = String(j.message);
+          else if (j?.error) detail = String(j.error);
+        } catch {
+          /* body not JSON */
+        }
+        const msg = `Nansen ${res.status} ${detail}`;
         this.lastError = msg;
-        throw new NansenError(msg);
+        throw new NansenError(msg, res.status);
       }
+      this.successCount++;
       return (await res.json()) as T;
     } catch (err) {
       if (this.lastError === null) {
         this.lastError = err instanceof Error ? err.message : 'unknown error';
       }
-      throw new NansenError(this.lastError, err);
+      throw new NansenError(this.lastError, undefined, err);
     } finally {
       clearTimeout(timer);
     }
   }
 
-  getSmartMoneyFlow(limit = this.cfg.nansen.defaults.smartMoneyFlowLimit): Promise<any> {
-    return this.query(this.cfg.nansen.endpoints.smartMoneyFlow, {
-      limit,
-      order_by: 'net_inflow',
-      order: 'desc',
+  async getSmartMoneyNetflow(opts: {
+    chains?: string[];
+    perPage?: number;
+    page?: number;
+    orderBy?: { field: string; direction: 'ASC' | 'DESC' }[];
+  } = {}): Promise<SmartMoneyNetflowResponse> {
+    const chains = opts.chains ?? this.cfg.nansen.defaults.smartMoneyChains;
+    const perPage = opts.perPage ?? this.cfg.nansen.defaults.smartMoneyPerPage;
+    const page = opts.page ?? 1;
+    const orderBy = opts.orderBy ?? [
+      { field: 'net_flow_24h_usd', direction: 'DESC' },
+    ];
+    return this.post<SmartMoneyNetflowResponse>(this.cfg.nansen.endpoints.smartMoneyNetflow, {
+      chains,
+      pagination: { page, per_page: perPage },
+      order_by: orderBy,
     });
   }
 
-  getTopWallets(
-    chain = this.cfg.nansen.defaults.topWalletsChain,
-    limit = this.cfg.nansen.defaults.topWalletsLimit,
-  ) {
-    return this.query(this.cfg.nansen.endpoints.topWallets, { chain, limit });
-  }
-
-  getTokenGodMode(token: string) {
-    return this.query(`${this.cfg.nansen.endpoints.tokenGodMode}/${token}`);
+  async getOhlcvBatch(opts: {
+    chain: string;
+    timeframe?: string;
+    tokenAddresses: string[];
+    from: string;
+    to: string;
+  }): Promise<OhlcvBatchResponse> {
+    return this.post<OhlcvBatchResponse>(this.cfg.nansen.endpoints.tokenOhlcv, {
+      chain: opts.chain,
+      timeframe: opts.timeframe ?? this.cfg.nansen.defaults.ohlcvTimeframe,
+      token_addresses: opts.tokenAddresses,
+      date: { from: opts.from, to: opts.to },
+    });
   }
 }

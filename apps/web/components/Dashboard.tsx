@@ -31,7 +31,7 @@ export default function Dashboard() {
       }
     };
     load();
-    const t = setInterval(load, 30_000);
+    const t = setInterval(load, 5 * 60_000);
     const c = setInterval(() => setClock(new Date().toUTCString()), 1000);
     return () => { clearInterval(t); clearInterval(c); };
   }, []);
@@ -50,7 +50,27 @@ export default function Dashboard() {
             <div className="text-sm">
               <p>Name: <span className="text-cyan-300">{index.indexName}</span></p>
               <p>Updated: {new Date(index.lastUpdate).toLocaleTimeString()}</p>
-              <p>Nansen API calls: <span className="text-amber-400">{index.apiCalls}</span></p>
+              <p>
+                Status:{' '}
+                <span className={
+                  index.status === 'ok' ? 'text-green-400' :
+                  index.status === 'nansen-empty' ? 'text-amber-400' :
+                  'text-red-400'
+                }>
+                  {index.status}
+                </span>
+                {index.message && (
+                  <span className="ml-2 text-amber-400">— {index.message}</span>
+                )}
+              </p>
+              <p>
+                Nansen calls:{' '}
+                <span className="text-amber-400">{index.successfulCalls}</span>
+                <span className="text-green-700"> / {index.apiCalls} total</span>
+              </p>
+              <p className="text-green-700">
+                Tokens: <span className="text-cyan-300">{index.tokens.length}</span>
+              </p>
             </div>
           ) : <p>loading…</p>}
         </Panel>
@@ -112,16 +132,18 @@ export default function Dashboard() {
             </table>
           ) : (
             <p className="text-sm text-green-700">
-              {arb?.status === 'nansen-empty'
-                ? 'Nansen returned no index data — cannot scan pairs'
-                : 'no opportunities above threshold — corr≥0.85 · |div|≥5%'}
+              {arb?.message ?? (
+                arb?.status === 'nansen-empty'
+                  ? 'Nansen returned no index data — cannot scan pairs'
+                  : 'no opportunities above threshold — corr≥0.85 · |div|≥5%'
+              )}
             </p>
           )}
         </Panel>
       </main>
 
       <footer className="border-t border-green-800 px-6 py-2 text-center text-xs text-green-700">
-        ⟳ auto-refresh 30s · backend: :3001 · Nansen-powered
+        ⟳ auto-refresh 5m · backend: :3001 · Nansen-powered
       </footer>
     </div>
   );

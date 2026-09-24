@@ -1,43 +1,54 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { IndexService } from './index.service.js';
-import { NansenError, NansenService } from '../nansen/nansen.service.js';
+import { NansenError, NansenService, SmartMoneyNetflowRow } from '../nansen/nansen.service.js';
 import { loadConfig } from '../config/config.js';
 import type { TokenWeight } from './index.analytics.js';
 
+const baseRow = (over: Partial<SmartMoneyNetflowRow> = {}): SmartMoneyNetflowRow => ({
+  token_address: '0xeth',
+  token_symbol: 'ETH',
+  chain: 'ethereum',
+  net_flow_1h_usd: 0,
+  net_flow_24h_usd: 50000,
+  net_flow_7d_usd: 200000,
+  net_flow_30d_usd: 800000,
+  trader_count: 50,
+  token_age_days: 2000,
+  market_cap_usd: 200_000_000,
+  ...over,
+});
+
 class FakeNansen {
-  private flow: any = {
-    tokens: [
-      { symbol: 'ETH', smart_money_score: 90, whale_concentration: 40 },
-      { symbol: 'SOL', smart_money_score: 80, whale_concentration: 30 },
-      { symbol: 'ARB', smart_money_score: 70, whale_concentration: 25 },
-      { symbol: 'OP', smart_money_score: 60, whale_concentration: 20 },
-      { symbol: 'MATIC', smart_money_score: 50, whale_concentration: 15 },
-      { symbol: 'AVAX', smart_money_score: 45, whale_concentration: 12 },
-      { symbol: 'LINK', smart_money_score: 40, whale_concentration: 10 },
-      { symbol: 'UNI', smart_money_score: 35, whale_concentration: 8 },
-      { symbol: 'AAVE', smart_money_score: 30, whale_concentration: 7 },
-      { symbol: 'CRV', smart_money_score: 25, whale_concentration: 5 },
-      { symbol: 'MKR', smart_money_score: 22, whale_concentration: 4 },
-      { symbol: 'SNX', smart_money_score: 20, whale_concentration: 3 },
-    ],
-  };
-  private counter = 0;
-  failNext: 'nansen-error' | 'nansen-empty' | null = null;
-  setFlow(f: any) { this.flow = f; }
-  setEmpty() { this.flow = { tokens: [] }; }
-  getSmartMoneyFlow = vi.fn(async (_limit: number) => {
-    this.counter++;
-    if (this.failNext === 'nansen-error') {
+  private rows: SmartMoneyNetflowRow[] = [
+    baseRow({ token_symbol: 'ETH', net_flow_24h_usd: 50000, trader_count: 50, market_cap_usd: 200_000_000 }),
+    baseRow({ token_symbol: 'SOL', token_address: '0xsol', chain: 'solana', net_flow_24h_usd: 30000, trader_count: 40, market_cap_usd: 80_000_000 }),
+    baseRow({ token_symbol: 'ARB', token_address: '0xarb', net_flow_24h_usd: 20000, trader_count: 30, market_cap_usd: 30_000_000 }),
+    baseRow({ token_symbol: 'OP', token_address: '0xop', net_flow_24h_usd: 10000, trader_count: 25, market_cap_usd: 20_000_000 }),
+    baseRow({ token_symbol: 'MATIC', token_address: '0xmatic', net_flow_24h_usd: -5000, trader_count: 20, market_cap_usd: 15_000_000 }),
+    baseRow({ token_symbol: 'AVAX', token_address: '0xavax', net_flow_24h_usd: -10000, trader_count: 18, market_cap_usd: 12_000_000 }),
+    baseRow({ token_symbol: 'LINK', token_address: '0xlink', net_flow_24h_usd: -20000, trader_count: 15, market_cap_usd: 8_000_000 }),
+    baseRow({ token_symbol: 'UNI', token_address: '0xuni', net_flow_24h_usd: -30000, trader_count: 12, market_cap_usd: 5_000_000 }),
+    baseRow({ token_symbol: 'AAVE', token_address: '0xaave', net_flow_24h_usd: -40000, trader_count: 10, market_cap_usd: 3_000_000 }),
+    baseRow({ token_symbol: 'CRV', token_address: '0xcrv', net_flow_24h_usd: -50000, trader_count: 8, market_cap_usd: 2_000_000 }),
+    baseRow({ token_symbol: 'MKR', token_address: '0xmkr', net_flow_24h_usd: -60000, trader_count: 6, market_cap_usd: 1_500_000 }),
+    baseRow({ token_symbol: 'SNX', token_address: '0xsnx', net_flow_24h_usd: -80000, trader_count: 4, market_cap_usd: 1_000_000 }),
+  ];
+  private empty = false;
+  failNext: 'error' | null = null;
+  setRows(r: SmartMoneyNetflowRow[]) { this.rows = r; }
+  setEmpty() { this.empty = true; }
+  getSmartMoneyNetflow = vi.fn(async () => {
+    if (this.failNext === 'error') {
       this.failNext = null;
-      throw new NansenError('nansen down');
+      throw new NansenError('nansen down', 500);
     }
-    if (this.failNext === 'nansen-empty') {
-      this.failNext = null;
-      this.flow = { tokens: [] };
-    }
-    return this.flow;
+    if (this.empty) return { data: [] };
+    return { data: this.rows };
   });
-  getCallCount() { return this.counter; }
+  getCallCount() { return 1; }
+  getSuccessCount() { return 1; }
+  getLastError() { return null; }
+  getOhlcvBatch = vi.fn(async () => ({ chain: 'solana', timeframe: '1d', tokens: [] }));
 }
 
 describe('IndexService', () => {
@@ -58,7 +69,7 @@ describe('IndexService', () => {
   });
 
   describe('current()', () => {
-    it('returns normalised, sorted tokens from Nansen', async () => {
+    it('returns normalised, sorted tokens derived from real Nansen rows', async () => {
       const out = await svc.current();
       expect(out.tokens.length).toBe(12);
       const sum = out.tokens.reduce((s: number, t: TokenWeight) => s + t.weight, 0);
@@ -67,29 +78,33 @@ describe('IndexService', () => {
         expect(out.tokens[i - 1].weight).toBeGreaterThanOrEqual(out.tokens[i].weight);
       }
       expect(out.status).toBe('ok');
+      expect(out.source).toBe('nansen');
       expect(out.message).toBeNull();
+      expect(out.successfulCalls).toBe(1);
+      expect(out.nansenRows?.length).toBe(12);
     });
 
-    it('falls back to hardcoded tokens and reports status="fallback" when Nansen throws', async () => {
-      nansen.failNext = 'nansen-error';
+    it('returns empty tokens and nansen-error when Nansen throws', async () => {
+      nansen.failNext = 'error';
       const out = await svc.current();
-      const symbols = out.tokens.map((t: TokenWeight) => t.symbol);
-      expect(symbols.slice(0, 5)).toEqual(['ETH', 'ARB', 'OP', 'SOL', 'MATIC']);
-      expect(out.status).toBe('fallback');
+      expect(out.tokens).toEqual([]);
+      expect(out.status).toBe('nansen-error');
+      expect(out.source).toBe('nansen');
       expect(out.message).toMatch(/Nansen/i);
     });
 
-    it('reports status="nansen-empty" when Nansen returns an empty list', async () => {
-      nansen.failNext = 'nansen-empty';
+    it('reports status="nansen-empty" when Nansen returns no data', async () => {
+      nansen.setEmpty();
       const out = await svc.current();
       expect(out.status).toBe('nansen-empty');
-      expect(out.message).toMatch(/no index data/i);
+      expect(out.tokens).toEqual([]);
+      expect(out.message).toMatch(/no netflow/i);
     });
 
-    it('exposes the Nansen call counter', async () => {
+    it('exposes both total and successful call counters', async () => {
       const out = await svc.current();
       expect(typeof out.apiCalls).toBe('number');
-      expect(out.apiCalls).toBe(1);
+      expect(typeof out.successfulCalls).toBe('number');
     });
 
     it('caches within the TTL', async () => {
@@ -97,7 +112,7 @@ describe('IndexService', () => {
       await svc.current();
       await svc.current();
       await svc.current();
-      expect(nansen.getSmartMoneyFlow).toHaveBeenCalledTimes(1);
+      expect(nansen.getSmartMoneyNetflow).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -128,17 +143,13 @@ describe('IndexService', () => {
     it('reflects changed inputs between polls', async () => {
       build({ CACHE_TTL_SECONDS: '0' });
       const r1 = await svc.rebalance();
-      nansen.setFlow({
-        tokens: [
-          { symbol: 'ETH', smart_money_score: 10, whale_concentration: 5 },
-          { symbol: 'SOL', smart_money_score: 10, whale_concentration: 5 },
-          ...Array.from({ length: 10 }, (_, i) => ({
-            symbol: `T${i}`,
-            smart_money_score: 10,
-            whale_concentration: 5,
-          })),
-        ],
-      });
+      nansen.setRows([
+        baseRow({ token_symbol: 'ETH', net_flow_24h_usd: 1, trader_count: 1, market_cap_usd: 1 }),
+        baseRow({ token_symbol: 'SOL', token_address: '0xsol', chain: 'solana', net_flow_24h_usd: 1, trader_count: 1, market_cap_usd: 1 }),
+        ...Array.from({ length: 10 }, (_, i) =>
+          baseRow({ token_symbol: `T${i}`, token_address: `0xt${i}`, net_flow_24h_usd: 1, trader_count: 1, market_cap_usd: 1 }),
+        ),
+      ]);
       const r2 = await svc.rebalance();
       const driftChanged = r1.drift !== r2.drift;
       const actionsChanged = JSON.stringify(r1.actions) !== JSON.stringify(r2.actions);

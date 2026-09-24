@@ -1,21 +1,30 @@
 {
   "nansen": {
-    "baseUrl": "https://api.nansen.ai/v1",
+    "baseUrl": "https://api.nansen.ai/api/v1",
     "endpoints": {
-      "smartMoneyFlow": "/smart-money/flow",
-      "topWallets": "/smart-money/top-wallets",
-      "tokenGodMode": "/token-god-mode"
+      "smartMoneyNetflow": "/smart-money/netflow",
+      "tokenOhlcv": "/tgm/token-ohlcv"
     },
     "defaults": {
-      "smartMoneyFlowLimit": 20,
-      "topWalletsChain": "ethereum",
-      "topWalletsLimit": 10,
-      "requestTimeoutMs": 8000
+      "requestTimeoutMs": 8000,
+      "smartMoneyChains": ["ethereum", "solana"],
+      "smartMoneyPerPage": 20,
+      "smartMoneyPage": 1,
+      "ohlcvTimeframe": "1d",
+      "ohlcvLookbackDays": 14
     }
   },
   "index": {
-    "name": "Top 20 Smart Money Inflow",
+    "name": "Top Smart Money Netflow",
     "topN": 10,
+    "scoring": {
+      "netflowWeight": 0.5,
+      "traderCountWeight": 0.3,
+      "marketCapWeight": 0.2,
+      "scoreScaleUsd": 100000,
+      "traderCountScale": 100,
+      "marketCapScaleUsd": 1000000000
+    },
     "rebalance": {
       "holdThresholdPct": 0.5,
       "initialTiltPct": 1.5,
@@ -25,36 +34,21 @@
       "confidenceDriftFactor": 0.1,
       "confidenceCap": 0.95
     },
-    "scoring": {
-      "smartMoneyWeight": 0.4,
-      "correlationWeight": 0.3,
-      "whaleConcentrationWeight": 0.2,
-      "smartMoneyBonusWeight": 0.1,
-      "smartMoneyBonusScale": 0.7,
-      "smartMoneyBonusBias": 0.3
-    },
-    "fallbackTokens": [
-      { "symbol": "ETH",   "smartMoneyScore": 90, "correlation": 0.90, "whaleConcentration": 35 },
-      { "symbol": "ARB",   "smartMoneyScore": 85, "correlation": 0.87, "whaleConcentration": 32 },
-      { "symbol": "OP",    "smartMoneyScore": 80, "correlation": 0.84, "whaleConcentration": 29 },
-      { "symbol": "SOL",   "smartMoneyScore": 75, "correlation": 0.81, "whaleConcentration": 26 },
-      { "symbol": "MATIC", "smartMoneyScore": 70, "correlation": 0.78, "whaleConcentration": 23 }
-    ],
     "messages": {
-      "nansenEmpty": "Nansen returned no index data — cannot compute weights",
-      "nansenError": "Nansen API unreachable — using fallback portfolio",
-      "fallbackUsed": "Using fallback portfolio (Nansen unavailable)"
+      "nansenEmpty": "Nansen returned no netflow data",
+      "nansenError": "Nansen API error"
     }
   },
   "arbitrage": {
     "topN": 8,
-    "synthetic": {
-      "points": 30,
-      "base": 100,
-      "stepPerToken": 3,
-      "stepPerBar": 0.5,
-      "noiseAmplitude": 5,
-      "noiseFreq": 0.3
+    "minCandles": 5,
+    "statArb": {
+      "zEntryThreshold": 1.5,
+      "zExitThreshold": 0.25,
+      "maxHalfLifeDays": 10,
+      "minCorrForCointegration": 0.7,
+      "minWindow": 7,
+      "maxWindow": 60
     }
   }
 }

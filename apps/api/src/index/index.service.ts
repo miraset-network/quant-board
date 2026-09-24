@@ -1,18 +1,21 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { APP_CONFIG } from '../config/config.js';
 import type { AppConfigShape } from '../config/config.js';
-import { NansenError, NansenService } from '../nansen/nansen.service.js';
-import { calcWeight, normalizeWeights, TokenWeight } from './index.analytics.js';
+import { NansenService, SmartMoneyNetflowRow } from '../nansen/nansen.service.js';
+import { calcWeight, clamp01, normalizeWeights, TokenWeight } from './index.analytics.js';
 
-export type IndexStatus = 'ok' | 'nansen-empty' | 'nansen-error' | 'fallback';
+export type IndexStatus = 'ok' | 'nansen-empty' | 'nansen-error';
 
 export interface IndexState {
   indexName: string;
   lastUpdate: string;
   tokens: TokenWeight[];
   apiCalls: number;
+  successfulCalls: number;
   status: IndexStatus;
   message: string | null;
+  source: 'nansen';
+  nansenRows?: SmartMoneyNetflowRow[];
 }
 
 interface CacheEntry {
@@ -25,12 +28,18 @@ export class IndexService {
   private cache: CacheEntry | null = null;
   private previousWeights: Record<string, number> = {};
   private readonly ttl: number;
+  private readonly scoreScaleUsd: number;
+  private readonly traderScale: number;
+  private readonly marketCapScaleUsd: number;
 
   constructor(
     private readonly nansen: NansenService,
     @Inject(APP_CONFIG) private readonly cfg: AppConfigShape,
   ) {
     this.ttl = this.cfg.cache.ttlSeconds * 1000;
+    this.scoreScaleUsd = this.cfg.index.scoring.scoreScaleUsd;
+    this.traderScale = this.cfg.index.scoring.traderCountScale;
+    this.marketCapScaleUsd = this.cfg.index.scoring.marketCapScaleUsd;
   }
 
   async current(): Promise<IndexState> {
@@ -39,55 +48,70 @@ export class IndexService {
     let tokens: TokenWeight[];
     let status: IndexStatus = 'ok';
     let message: string | null = null;
+    let nansenRows: SmartMoneyNetflowRow[] | undefined;
 
     try {
-      const flow: any = await this.nansen.getSmartMoneyFlow();
-      const raw: any[] = flow?.tokens ?? flow?.data ?? [];
+      const res = await this.nansen.getSmartMoneyNetflow();
+      const raw = res.data ?? [];
       if (raw.length === 0) {
         status = 'nansen-empty';
         message = this.cfg.index.messages.nansenEmpty;
-        tokens = this.fallbackTokens();
+        tokens = [];
       } else {
-        tokens = raw.map((t: any) => ({
-          symbol: t.symbol ?? t.token_symbol ?? 'UNKNOWN',
-          weight: 0,
-          smartMoneyScore: Number(t.smart_money_score ?? 50),
-          correlation: Number(t.correlation ?? 0.85),
-          whaleConcentration: Number(t.whale_concentration ?? 20),
-        }));
+        nansenRows = raw;
+        tokens = raw.map((r) => this.netflowRowToToken(r));
       }
     } catch (err) {
-      status = err instanceof NansenError ? 'fallback' : 'nansen-error';
-      message = this.cfg.index.messages.nansenError;
-      tokens = this.fallbackTokens();
+      const detail = err instanceof Error ? err.message : 'unknown error';
+      status = 'nansen-error';
+      message = `${this.cfg.index.messages.nansenError}: ${detail}`;
+      tokens = [];
     }
 
-    const weighted = normalizeWeights(
-      tokens.map((t) => ({ ...t, weight: calcWeight(t, this.cfg.index.scoring) })),
-    ).sort((a, b) => b.weight - a.weight);
 
-    this.updatePreviousWeights(weighted);
+    const weighted = tokens.length === 0
+      ? []
+      : normalizeWeights(
+          tokens.map((t) => ({ ...t, weight: calcWeight(t, this.cfg.index.scoring) })),
+        ).sort((a, b) => b.weight - a.weight);
+
+    if (weighted.length > 0) this.updatePreviousWeights(weighted);
 
     const data: IndexState = {
       indexName: this.cfg.index.name,
       lastUpdate: new Date().toISOString(),
       tokens: weighted,
       apiCalls: this.nansen.getCallCount(),
+      successfulCalls: this.nansen.getSuccessCount(),
       status,
       message,
+      source: 'nansen',
+      nansenRows,
     };
     this.cache = { data, at: Date.now() };
     return data;
   }
 
-  private fallbackTokens(): TokenWeight[] {
-    return this.cfg.index.fallbackTokens.map((t) => ({
-      symbol: t.symbol,
+  private netflowRowToToken(r: SmartMoneyNetflowRow): TokenWeight {
+    const flow = Number(r.net_flow_24h_usd ?? 0);
+    const flowSign = flow >= 0 ? 1 : -1;
+    const flowMag = Math.abs(flow);
+    const flowScore = clamp01(flowMag / this.scoreScaleUsd) * flowSign;
+
+    const traderScore = clamp01(Number(r.trader_count ?? 0) / this.traderScale);
+    const marketCapScore = clamp01(Number(r.market_cap_usd ?? 0) / this.marketCapScaleUsd);
+
+    const smartMoneyScore = Number(((flowScore + 1) * 50).toFixed(2));
+    const correlation = Number((traderScore * 0.5 + marketCapScore * 0.5).toFixed(3));
+    const whaleConcentration = Number((traderScore * 100).toFixed(2));
+
+    return {
+      symbol: r.token_symbol || 'UNKNOWN',
       weight: 0,
-      smartMoneyScore: t.smartMoneyScore,
-      correlation: t.correlation,
-      whaleConcentration: t.whaleConcentration,
-    }));
+      smartMoneyScore,
+      correlation,
+      whaleConcentration,
+    };
   }
 
   private updatePreviousWeights(weighted: TokenWeight[]): void {
@@ -110,10 +134,21 @@ export class IndexService {
   }
 
   async rebalance() {
-    const { tokens } = await this.current();
-    const topN = this.cfg.index.topN;
-    const targetUniverse = tokens.slice(0, topN);
+    const idx = await this.current();
+    const targetUniverse = idx.tokens.slice(0, this.cfg.index.topN);
     const r = this.cfg.index.rebalance;
+
+    if (targetUniverse.length === 0) {
+      return {
+        signalDate: new Date().toISOString(),
+        triggered: false,
+        drift: 0,
+        confidence: 0,
+        actions: [],
+        indexStatus: idx.status,
+        message: idx.message,
+      };
+    }
 
     const symbols = targetUniverse.map((t) => t.symbol);
     const currentMap: Record<string, number> = {};
