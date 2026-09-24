@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { IndexService } from './index.service.js';
-import { NansenService } from '../nansen/nansen.service.js';
+import { NansenError, NansenService } from '../nansen/nansen.service.js';
+import { loadConfig } from '../config/config.js';
 import type { TokenWeight } from './index.analytics.js';
 
 class FakeNansen {
@@ -21,29 +22,39 @@ class FakeNansen {
     ],
   };
   private counter = 0;
-  failNext = false;
+  failNext: 'nansen-error' | 'nansen-empty' | null = null;
   setFlow(f: any) { this.flow = f; }
+  setEmpty() { this.flow = { tokens: [] }; }
   getSmartMoneyFlow = vi.fn(async (_limit: number) => {
     this.counter++;
-    if (this.failNext) {
-      this.failNext = false;
-      throw new Error('nansen down');
+    if (this.failNext === 'nansen-error') {
+      this.failNext = null;
+      throw new NansenError('nansen down');
+    }
+    if (this.failNext === 'nansen-empty') {
+      this.failNext = null;
+      this.flow = { tokens: [] };
     }
     return this.flow;
   });
   getCallCount() { return this.counter; }
 }
 
-const _flush = () => new Promise<void>((r) => setImmediate(r));
-
 describe('IndexService', () => {
   let svc: IndexService;
   let nansen: FakeNansen;
 
-  beforeEach(() => {
-    process.env.CACHE_TTL_SECONDS = '0';
+  const build = (envOverrides: Record<string, string> = {}) => {
+    for (const [k, v] of Object.entries(envOverrides)) process.env[k] = v;
+    const cfg = loadConfig();
     nansen = new FakeNansen();
-    svc = new IndexService(nansen as unknown as NansenService);
+    svc = new IndexService(nansen as unknown as NansenService, cfg);
+  };
+
+  beforeEach(() => {
+    delete process.env.CACHE_TTL_SECONDS;
+    delete process.env.REBALANCE_THRESHOLD;
+    build();
   });
 
   describe('current()', () => {
@@ -55,13 +66,24 @@ describe('IndexService', () => {
       for (let i = 1; i < out.tokens.length; i++) {
         expect(out.tokens[i - 1].weight).toBeGreaterThanOrEqual(out.tokens[i].weight);
       }
+      expect(out.status).toBe('ok');
+      expect(out.message).toBeNull();
     });
 
-    it('falls back to hardcoded tokens when Nansen throws', async () => {
-      nansen.failNext = true;
+    it('falls back to hardcoded tokens and reports status="fallback" when Nansen throws', async () => {
+      nansen.failNext = 'nansen-error';
       const out = await svc.current();
       const symbols = out.tokens.map((t: TokenWeight) => t.symbol);
       expect(symbols.slice(0, 5)).toEqual(['ETH', 'ARB', 'OP', 'SOL', 'MATIC']);
+      expect(out.status).toBe('fallback');
+      expect(out.message).toMatch(/Nansen/i);
+    });
+
+    it('reports status="nansen-empty" when Nansen returns an empty list', async () => {
+      nansen.failNext = 'nansen-empty';
+      const out = await svc.current();
+      expect(out.status).toBe('nansen-empty');
+      expect(out.message).toMatch(/no index data/i);
     });
 
     it('exposes the Nansen call counter', async () => {
@@ -71,8 +93,7 @@ describe('IndexService', () => {
     });
 
     it('caches within the TTL', async () => {
-      process.env.CACHE_TTL_SECONDS = '60';
-      svc = new IndexService(nansen as unknown as NansenService);
+      build({ CACHE_TTL_SECONDS: '60' });
       await svc.current();
       await svc.current();
       await svc.current();
@@ -105,6 +126,7 @@ describe('IndexService', () => {
     });
 
     it('reflects changed inputs between polls', async () => {
+      build({ CACHE_TTL_SECONDS: '0' });
       const r1 = await svc.rebalance();
       nansen.setFlow({
         tokens: [
@@ -124,7 +146,7 @@ describe('IndexService', () => {
     });
 
     it('triggered boolean is derived from drift vs threshold', async () => {
-      process.env.REBALANCE_THRESHOLD = '0.5';
+      build({ REBALANCE_THRESHOLD: '0.5' });
       const reb = await svc.rebalance();
       expect(reb.triggered).toBe(reb.drift / 100 > 0.5);
     });

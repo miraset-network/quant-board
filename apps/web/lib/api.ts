@@ -13,6 +13,8 @@ export interface IndexState {
   lastUpdate: string;
   tokens: Token[];
   apiCalls: number;
+  status: 'ok' | 'nansen-empty' | 'nansen-error' | 'fallback';
+  message?: string | null;
 }
 
 export interface Rebalance {
@@ -31,7 +33,8 @@ export interface Arbitrage {
     signal: string;
     expectedReturn: string;
   }[];
-  status: 'ok' | 'no-threshold-match' | 'nansen-empty';
+  status: 'ok' | 'no-threshold-match' | 'nansen-empty' | 'nansen-error';
+  message?: string | null;
 }
 
 async function get<T>(path: string): Promise<T> {

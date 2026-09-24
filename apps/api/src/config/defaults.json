@@ -1,0 +1,60 @@
+{
+  "nansen": {
+    "baseUrl": "https://api.nansen.ai/v1",
+    "endpoints": {
+      "smartMoneyFlow": "/smart-money/flow",
+      "topWallets": "/smart-money/top-wallets",
+      "tokenGodMode": "/token-god-mode"
+    },
+    "defaults": {
+      "smartMoneyFlowLimit": 20,
+      "topWalletsChain": "ethereum",
+      "topWalletsLimit": 10,
+      "requestTimeoutMs": 8000
+    }
+  },
+  "index": {
+    "name": "Top 20 Smart Money Inflow",
+    "topN": 10,
+    "rebalance": {
+      "holdThresholdPct": 0.5,
+      "initialTiltPct": 1.5,
+      "targetTiltPct": 1.2,
+      "minWeightPct": 0.5,
+      "confidenceBase": 0.5,
+      "confidenceDriftFactor": 0.1,
+      "confidenceCap": 0.95
+    },
+    "scoring": {
+      "smartMoneyWeight": 0.4,
+      "correlationWeight": 0.3,
+      "whaleConcentrationWeight": 0.2,
+      "smartMoneyBonusWeight": 0.1,
+      "smartMoneyBonusScale": 0.7,
+      "smartMoneyBonusBias": 0.3
+    },
+    "fallbackTokens": [
+      { "symbol": "ETH",   "smartMoneyScore": 90, "correlation": 0.90, "whaleConcentration": 35 },
+      { "symbol": "ARB",   "smartMoneyScore": 85, "correlation": 0.87, "whaleConcentration": 32 },
+      { "symbol": "OP",    "smartMoneyScore": 80, "correlation": 0.84, "whaleConcentration": 29 },
+      { "symbol": "SOL",   "smartMoneyScore": 75, "correlation": 0.81, "whaleConcentration": 26 },
+      { "symbol": "MATIC", "smartMoneyScore": 70, "correlation": 0.78, "whaleConcentration": 23 }
+    ],
+    "messages": {
+      "nansenEmpty": "Nansen returned no index data — cannot compute weights",
+      "nansenError": "Nansen API unreachable — using fallback portfolio",
+      "fallbackUsed": "Using fallback portfolio (Nansen unavailable)"
+    }
+  },
+  "arbitrage": {
+    "topN": 8,
+    "synthetic": {
+      "points": 30,
+      "base": 100,
+      "stepPerToken": 3,
+      "stepPerBar": 0.5,
+      "noiseAmplitude": 5,
+      "noiseFreq": 0.3
+    }
+  }
+}
