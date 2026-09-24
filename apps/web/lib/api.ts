@@ -69,9 +69,41 @@ async function get<T>(path: string): Promise<T> {
   return res.json() as T;
 }
 
+export interface BacktestLeg {
+  symbol: string;
+  weight: number;
+  returnPct: number;
+  candles: number;
+}
+
+export interface BacktestPoint {
+  date: string;
+  nav: number;
+}
+
+export interface Backtest {
+  status: 'ok' | 'no-data' | 'nansen-error';
+  message?: string | null;
+  days: number;
+  windowStart: string;
+  windowEnd: string;
+  universeSize: number;
+  requestedSize: number;
+  startNav: number;
+  endNav: number;
+  returnPct: number;
+  maxDrawdownPct: number;
+  bestDay: { date: string; pct: number } | null;
+  worstDay: { date: string; pct: number } | null;
+  series: BacktestPoint[];
+  legs: BacktestLeg[];
+  generatedAt: string;
+}
+
 export const api = {
   index: () => get<IndexState>('/api/index/current'),
   rebalance: () => get<Rebalance>('/api/index/rebalance'),
   arbitrage: () => get<Arbitrage>('/api/arbitrage/opportunities'),
   credits: () => get<IndexCredits & { apiCalls: number; successfulCalls: number; lastError: string | null }>('/api/nansen/credits'),
+  backtest: (days = 30) => get<Backtest>(`/api/backtest/run?days=${days}`),
 };

@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { api, IndexState, Rebalance, Arbitrage } from '../lib/api';
+import { useEffect, useMemo, useState } from 'react';
+import { api, IndexState, Rebalance, Arbitrage, Backtest } from '../lib/api';
 
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -14,10 +14,92 @@ function Panel({ title, children }: { title: string; children: React.ReactNode }
   );
 }
 
+const SPARK_CHARS = ['▁', '▂', '▃', '▄', '▅', '▆', '▇', '█'];
+
+function sparkline(values: number[], width = 48): string {
+  if (values.length === 0) return '';
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = max - min || 1;
+  const step = Math.max(1, Math.floor(values.length / width));
+  const out: string[] = [];
+  for (let i = 0; i < values.length; i += step) {
+    const slice = values.slice(i, i + step);
+    const v = slice.reduce((a, b) => a + b, 0) / slice.length;
+    const idx = Math.min(SPARK_CHARS.length - 1, Math.floor(((v - min) / range) * (SPARK_CHARS.length - 1)));
+    out.push(SPARK_CHARS[idx]);
+  }
+  return out.join('');
+}
+
+function BacktestView({ bt }: { bt: Backtest }) {
+  const navSeries = useMemo(
+    () => bt.series.map((p) => p.nav).filter((n): n is number => typeof n === 'number' && Number.isFinite(n)),
+    [bt.series],
+  );
+  const line = sparkline(navSeries);
+  const ret = typeof bt.returnPct === 'number' ? bt.returnPct : 0;
+  const startNav = typeof bt.startNav === 'number' ? bt.startNav : 1;
+  const endNav = typeof bt.endNav === 'number' ? bt.endNav : 1;
+  const maxDd = typeof bt.maxDrawdownPct === 'number' ? bt.maxDrawdownPct : 0;
+  const retClass = ret > 0 ? 'text-green-400' : ret < 0 ? 'text-red-400' : 'text-green-700';
+  const ddClass = maxDd > 20 ? 'text-red-400' : maxDd > 10 ? 'text-amber-400' : 'text-green-400';
+  const fmtPct = (n: number) => `${n > 0 ? '+' : ''}${n.toFixed(2)}%`;
+  return (
+    <div className="text-sm">
+      {bt.status !== 'ok' || bt.series.length < 2 ? (
+        <p className="text-amber-400">— {bt.message ?? bt.status ?? 'insufficient data'}</p>
+      ) : (
+        <>
+          <p className="text-base">
+            <span className={retClass}>{fmtPct(ret)}</span>
+            <span className="text-green-700"> · NAV {startNav.toFixed(2)} → {endNav.toFixed(2)}</span>
+          </p>
+          <p className="text-xs text-green-700">
+            window {bt.windowStart} → {bt.windowEnd} · universe {bt.universeSize}/{bt.requestedSize} · max DD <span className={ddClass}>{fmtPct(maxDd)}</span>
+          </p>
+          {line && <p className="my-2 break-all text-cyan-300">{line}</p>}
+          {bt.bestDay && typeof bt.bestDay.pct === 'number' && (
+            <p className="text-xs">
+              best day: <span className="text-green-400">{bt.bestDay.date} {fmtPct(bt.bestDay.pct)}</span>
+              {bt.worstDay && typeof bt.worstDay.pct === 'number' && (
+                <> · worst: <span className="text-red-400">{bt.worstDay.date} {fmtPct(bt.worstDay.pct)}</span></>
+              )}
+            </p>
+          )}
+          <table className="mt-3 w-full text-xs">
+            <thead className="text-green-600">
+              <tr>
+                <th className="text-left">SYMBOL</th>
+                <th className="text-right">WT%</th>
+                <th className="text-right">RETURN</th>
+                <th className="text-right">#CANDLES</th>
+              </tr>
+            </thead>
+            <tbody>
+              {bt.legs.slice(0, 10).map((l) => (
+                <tr key={l.symbol} className="border-t border-green-950">
+                  <td className="text-cyan-300">{l.symbol}</td>
+                  <td className="text-right">{l.weight}</td>
+                  <td className={`text-right ${l.returnPct > 0 ? 'text-green-400' : l.returnPct < 0 ? 'text-red-400' : ''}`}>
+                    {l.returnPct > 0 ? '+' : ''}{l.returnPct.toFixed(2)}%
+                  </td>
+                  <td className="text-right text-green-700">{l.candles}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </>
+      )}
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const [index, setIndex] = useState<IndexState | null>(null);
   const [reb, setReb] = useState<Rebalance | null>(null);
   const [arb, setArb] = useState<Arbitrage | null>(null);
+  const [bt, setBt] = useState<Backtest | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [clock, setClock] = useState('');
 
@@ -30,16 +112,25 @@ export default function Dashboard() {
         setErr(e instanceof Error ? e.message : 'fetch failed');
       }
     };
+    const loadBt = async () => {
+      try {
+        setBt(await api.backtest(30));
+      } catch {
+        /* leave previous */
+      }
+    };
     load();
-    const t = setInterval(load, 5 * 60_000);
+    loadBt();
+    const t = setInterval(load, 30_000);
+    const tBt = setInterval(loadBt, 5 * 60_000);
     const c = setInterval(() => setClock(new Date().toUTCString()), 1000);
-    return () => { clearInterval(t); clearInterval(c); };
+    return () => { clearInterval(t); clearInterval(tBt); clearInterval(c); };
   }, []);
 
   return (
     <div className="min-h-screen bg-[#0a0e0a] font-mono text-green-400">
       <header className="flex items-center justify-between border-b border-green-800 px-6 py-3">
-        <span className="text-lg font-bold tracking-widest">TOKEN GOD INDEXES</span>
+        <span className="text-lg font-bold tracking-widest">FOMO INDEXES</span>
         <span className="text-xs text-green-600">[LIVE] ⚡ {clock}</span>
       </header>
 
@@ -128,6 +219,14 @@ export default function Dashboard() {
               ))}
             </tbody>
           </table>
+        </Panel>
+
+        <Panel title={`BACKTEST (${bt?.days ?? 30}D BUY-&-HOLD)`}>
+          {bt ? (
+            <BacktestView bt={bt} />
+          ) : (
+            <p className="text-sm text-green-700">loading backtest…</p>
+          )}
         </Panel>
 
         <Panel title="ARBITRAGE OPPORTUNITIES">

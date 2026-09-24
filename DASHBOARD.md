@@ -1,4 +1,4 @@
-# Dashboard Structure — Token God Indexes
+# Dashboard Structure — FOMO Indexes
 
 Live at `apps/web/components/Dashboard.tsx` (client component, polls 3 endpoints every 30 s).
 
@@ -7,7 +7,7 @@ Live at `apps/web/components/Dashboard.tsx` (client component, polls 3 endpoints
 ```
 ┌──────────────────────────────────────────────────────────────────┐
 │ HEADER                                                            │
-│   TOKEN GOD INDEXES                       [LIVE] ⚡ <UTC clock>   │
+│   FOMO INDEXES                       [LIVE] ⚡ <UTC clock>   │
 ├──────────────────────────────────────────┬───────────────────────┤
 │ PANEL 1 · INDEX STATUS                   │ PANEL 2 · REBALANCE   │
 │                                          │   SIGNAL              │

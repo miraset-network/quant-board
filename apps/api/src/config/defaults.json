@@ -7,12 +7,12 @@
       "account": "/account"
     },
     "defaults": {
-      "requestTimeoutMs": 8000,
+      "requestTimeoutMs": 15000,
       "smartMoneyChains": ["ethereum", "solana"],
       "smartMoneyPerPage": 20,
       "smartMoneyPage": 1,
       "ohlcvTimeframe": "1d",
-      "ohlcvLookbackDays": 14
+      "ohlcvLookbackDays": 30
     }
   },
   "index": {

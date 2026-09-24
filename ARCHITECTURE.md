@@ -1,4 +1,4 @@
-# Token God Indexes — Архітектура системи (Monorepo)
+# FOMO Indexes — Архітектура системи (Monorepo)
 
 ##  System Overview
 

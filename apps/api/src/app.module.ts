@@ -4,10 +4,11 @@ import { AppService } from './app.service.js';
 import { IndexModule } from './index/index.module.js';
 import { ArbitrageModule } from './arbitrage/arbitrage.module.js';
 import { NansenModule } from './nansen/nansen.module.js';
+import { BacktestModule } from './backtest/backtest.module.js';
 import { ConfigModule } from './config/config.module.js';
 
 @Module({
-  imports: [ConfigModule, IndexModule, ArbitrageModule, NansenModule],
+  imports: [ConfigModule, IndexModule, ArbitrageModule, NansenModule, BacktestModule],
   controllers: [AppController],
   providers: [AppService],
 })

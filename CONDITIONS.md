@@ -68,7 +68,7 @@
 | Базовий | 11-20% | Дані впливають на логіку частково |
 | Глибокий | 21-25% | Nansen data — ядро бізнес-логіки |
 
-**Для Token God Indexes:**
+**Для FOMO Indexes:**
 - Smart Money flow → ваги токенів ✅
 - Correlation score → ребаланс тригери ✅
 - Whale concentration → risk adjustment ✅
@@ -82,7 +82,7 @@
 | Interesting | 11-20% | Новий кут зору |
 | Unique | 21-25% | Use case якого ще не бачили |
 
-**Для Token God Indexes:**
+**Для FOMO Indexes:**
 - ✅ Динамічний індекс на Smart Money
 - ✅ Correlation-based weighting
 - ✅ Static arbitrage detection
@@ -161,7 +161,7 @@
    - Не просто display — а decision making
 
 2. **Maximize Originality (25%)**
-   - Унікальний use case (Token God Indexes)
+   - Унікальний use case (FOMO Indexes)
    - Те, чого ще не робили
 
 3. **Ensure Functionality (25%)**

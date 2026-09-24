@@ -1,4 +1,4 @@
-# Token God Indexes — План імплементації (1 тиждень)
+# FOMO Indexes — План імплементації (1 тиждень)
 
 ## Tech Stack
 - **Backend**: Node.js + TypeScript + Express
@@ -210,7 +210,7 @@ function shouldRebalance(current: Index, target: Index): boolean {
 
 **Structure**:
 ```markdown
-# Token God Indexes
+# FOMO Indexes
 ## What it does
 ## Architecture diagram
 ## Quick Start (pnpm i && pnpm dev)

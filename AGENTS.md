@@ -2,7 +2,7 @@
 
 Primary instructions: node_modules/@daochild/agents-config/AGENTS.md — read in full and follow unless overridden below.
 
-Hackathon project ("Token God Indexes") for the Nansen Meridian Buildathon (Sep 22–28 2026). Bias toward a working demo over refactoring. `PLAN.md` is the day-by-day build plan; `CONDITIONS.md` has submission rules (1,000+ Nansen API calls, demo < 10 min).
+Hackathon project ("FOMO Indexes") for the Nansen Meridian Buildathon (Sep 22–28 2026). Bias toward a working demo over refactoring. `PLAN.md` is the day-by-day build plan; `CONDITIONS.md` has submission rules (1,000+ Nansen API calls, demo < 10 min).
 
 ## Structure
 
