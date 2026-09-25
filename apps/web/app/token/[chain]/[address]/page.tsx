@@ -615,7 +615,7 @@ export default function TokenPage() {
                     <li>
                       <a
                         className="text-cyan-300 hover:underline"
-                        href={`https://app.nansen.ai/token/${chain}:${address}`}
+                        href={`https://app.nansen.ai/token-god-mode?tokenAddress=${address}&chain=${chain}&tab=transactions`}
                         target="_blank"
                         rel="noreferrer"
                       >
