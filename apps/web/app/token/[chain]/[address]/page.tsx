@@ -353,7 +353,7 @@ function RiskPanel({ risk }: { risk: TokenRisk | null }) {
         <h2 className="mb-3 border-b border-green-900 pb-2 text-sm tracking-widest text-green-500">
           RISK / REWARD — NANSEN INDICATORS
         </h2>
-        <p className="text-xs text-green-700">нет данных по этому токену</p>
+        <p className="text-xs text-green-700">no data for this token</p>
       </section>
     );
   }
@@ -371,21 +371,21 @@ function RiskPanel({ risk }: { risk: TokenRisk | null }) {
       <div className="mb-3 flex items-baseline justify-between border-b border-green-900 pb-2">
         <h2 className="text-sm tracking-widest text-green-500">
           RISK / REWARD — NANSEN INDICATORS
-          {risk.cached && <span className="ml-2 text-[10px] text-green-700">(cached, 24h TTL — экономим 5 cr)</span>}
+          {risk.cached && <span className="ml-2 text-[10px] text-green-700">(cached, 24h TTL — saves 5 cr)</span>}
         </h2>
         <span className={`text-xs font-bold ${overallClass}`}>RISK: {overallRisk}</span>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
         <div>
-          <div className="mb-1 text-[10px] uppercase tracking-widest text-red-400/80">Risk (чем хуже — тем больше)</div>
+          <div className="mb-1 text-[10px] uppercase tracking-widest text-red-400/80">Risk (the worse — the higher)</div>
           <RiskRow label="BTC reflexivity" ind={riskByType.get('btc-reflexivity') ?? null} />
           <RiskRow label="Liquidity risk" ind={riskByType.get('liquidity-risk') ?? null} />
           <RiskRow label="Concentration risk" ind={riskByType.get('concentration-risk') ?? null} />
           <RiskRow label="Supply inflation" ind={riskByType.get('token-supply-inflation') ?? null} />
         </div>
         <div>
-          <div className="mb-1 text-[10px] uppercase tracking-widest text-cyan-400/80">Reward (чем лучше — тем больше alpha)</div>
+          <div className="mb-1 text-[10px] uppercase tracking-widest text-cyan-400/80">Reward (the better — the more alpha)</div>
           <RiskRow label="Chain TVL" ind={rewardByType.get('chain-tvl') ?? null} />
           <RiskRow label="Trading range" ind={rewardByType.get('trading-range') ?? null} />
           <RiskRow label="Price momentum" ind={rewardByType.get('price-momentum') ?? null} />
@@ -456,38 +456,38 @@ export default function TokenPage() {
             {/* Stats */}
             <section className="lg:col-span-1">
               <div className="grid grid-cols-2 gap-2">
-                <StatCard label="Chain" value={chain} sub="on-chain дом токена" />
+                <StatCard label="Chain" value={chain} sub="token's home chain" />
                 <StatCard
                   label="Price (30d)"
                   value={fmtPrice(data.price)}
-                  sub={data.changePct !== null ? `${data.changePct > 0 ? '+' : ''}${data.changePct}% за 30d` : 'нет данных'}
+                  sub={data.changePct !== null ? `${data.changePct > 0 ? '+' : ''}${data.changePct}% over 30d` : 'no data'}
                   className={data.changePct !== null ? (data.changePct >= 0 ? 'text-green-400' : 'text-red-400') : 'text-cyan-300'}
                 />
-                <StatCard label="Index Weight" value={data.weight !== null ? `${data.weight}%` : '—'} sub="доля в индексе" />
-                <StatCard label="Market Cap" value={fmtUsd(data.marketCapUsd)} sub="оценка Nansen" />
+                <StatCard label="Index Weight" value={data.weight !== null ? `${data.weight}%` : '—'} sub="share in the index" />
+                <StatCard label="Market Cap" value={fmtUsd(data.marketCapUsd)} sub="Nansen estimate" />
 
                 <StatCard
                   label="Smart Money Score"
                   value={data.smartMoneyScore !== null ? `${data.smartMoneyScore}/100` : '—'}
-                  sub="Nansen netflow 24h: >50 приток, <50 отток"
+                  sub="Nansen netflow 24h: >50 inflow, <50 outflow"
                 />
                 <StatCard label="Correlation" value={data.correlation !== null ? data.correlation.toFixed(2) : '—'} sub="proxy 0–1: quality + liquidity" />
                 <StatCard
                   label="Whale %"
                   value={data.whaleConcentration !== null ? `${data.whaleConcentration}%` : '—'}
-                  sub="доля whales среди держателей"
+                  sub="whale share among holders"
                 />
-                <StatCard label="Traders (24h)" value={fmtNum(data.traderCount)} sub="smart-money трейдеры" />
+                <StatCard label="Traders (24h)" value={fmtNum(data.traderCount)} sub="smart-money traders" />
 
                 <StatCard
                   label="Netflow 24h"
                   value={fmtUsd(data.netflow24hUsd)}
-                  sub="продажи / покупки smart money"
+                  sub="smart money sells / buys"
                   className={data.netflow24hUsd !== null ? (data.netflow24hUsd >= 0 ? 'text-green-400' : 'text-red-400') : ''}
                 />
                 <StatCard label="Netflow 7d" value={fmtUsd(data.netflow7dUsd)} className={data.netflow7dUsd !== null ? (data.netflow7dUsd >= 0 ? 'text-green-400' : 'text-red-400') : ''} />
                 <StatCard label="Netflow 30d" value={fmtUsd(data.netflow30dUsd)} className={data.netflow30dUsd !== null ? (data.netflow30dUsd >= 0 ? 'text-green-400' : 'text-red-400') : ''} />
-                <StatCard label="Age" value={data.tokenAgeDays !== null ? `${data.tokenAgeDays}d` : '—'} sub="возраст токена" />
+                <StatCard label="Age" value={data.tokenAgeDays !== null ? `${data.tokenAgeDays}d` : '—'} sub="token age" />
               </div>
 
               {data.sectors.length > 0 && (
@@ -571,7 +571,7 @@ export default function TokenPage() {
                         </li>
                       </>
                     )}
-                    {!meta && <li className="text-green-700">chain &lsquo;{chain}&rsquo; не поддержан (нет ссылок)</li>}
+                    {!meta && <li className="text-green-700">chain &lsquo;{chain}&rsquo; not supported (no links)</li>}
                   </ul>
                 </div>
 
@@ -592,7 +592,7 @@ export default function TokenPage() {
                         </li>
                       ))
                     ) : (
-                      <li className="text-green-700">в CEX-мэппинге нет — используй DEX</li>
+                      <li className="text-green-700">not in CEX mapping — use a DEX</li>
                     )}
                   </ul>
                 </div>

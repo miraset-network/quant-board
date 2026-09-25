@@ -211,11 +211,11 @@ export default function Dashboard() {
                 <th className="text-left">#</th>
                 <th className="text-left">TOKEN</th>
                 <th className="text-left">CHAIN</th>
-                <th className="text-right" title="Доля токена в индексе (сумма всех = 100%). Считается из SM + CORR + WHALE%">WEIGHT</th>
-                <th className="text-right" title="Smart Money Score (0–100). Nansen: чистый приток/отток USD от smart-money кошельков за 24ч. >50 = приток, <50 = отток">SM</th>
-                <th className="text-right" title="Correlation proxy (0–1). Внутренняя оценка, насколько токен 'качественный': 50% размер smart-money трейдеров + 50% market cap. Ближе к 1 = крупный и активный">CORR</th>
-                <th className="text-right" title="Whale concentration (0–100%). Доля крупных smart-money трейдеров среди держателей. 100% = почти все держатели — киты; низкая = розница">WHALE%</th>
-                <th className="text-right" title="Нетто-флоу smart money за 24 часа, USD. Зелёный = покупают, красный = продают">FLOW 24H</th>
+                <th className="text-right" title="Token share in the index (sums to 100%). Computed from SM + CORR + WHALE%">WEIGHT</th>
+                <th className="text-right" title="Smart Money Score (0–100). Nansen: net inflow/outflow in USD from smart-money wallets over 24h. >50 = inflow, <50 = outflow">SM</th>
+                <th className="text-right" title="Correlation proxy (0–1). Internal estimate of token 'quality': 50% smart-money trader count + 50% market cap. Closer to 1 = larger and more active">CORR</th>
+                <th className="text-right" title="Whale concentration (0–100%). Share of large smart-money traders among holders. 100% = almost all holders are whales; low = retail">WHALE%</th>
+                <th className="text-right" title="Smart money net flow over the last 24 hours, USD. Green = buying, red = selling">FLOW 24H</th>
               </tr>
             </thead>
             <tbody>
@@ -226,7 +226,7 @@ export default function Dashboard() {
                   <tr
                     key={t.symbol}
                     onClick={href ? () => router.push(href) : undefined}
-                    title={href ? `Открыть детали ${t.symbol} на ${t.chain}` : undefined}
+                    title={href ? `View ${t.symbol} details on ${t.chain}` : undefined}
                     className={`group border-t border-green-950 transition-colors hover:bg-green-950/40 ${href ? 'cursor-pointer' : ''}`}
                   >
                     <td>{i + 1}</td>
@@ -247,10 +247,10 @@ export default function Dashboard() {
             </tbody>
           </table>
           <p className="mt-2 border-t border-green-950 pt-2 text-[10px] leading-relaxed text-green-700">
-            <span className="text-green-600">SM</span> — smart-money score 0–100 (Nansen netflow 24h; &gt;50 приток, &lt;50 отток) ·{' '}
-            <span className="text-green-600">CORR</span> — прокси корреляции/качества 0–1 (trader count + market cap) ·{' '}
-            <span className="text-green-600">WHALE%</span> — концентрация у китов (100% = всё у smart money) ·{' '}
-            нажми на строку — детали токена, график, DEX/CEX
+            <span className="text-green-600">SM</span> — smart-money score 0–100 (Nansen netflow 24h; &gt;50 inflow, &lt;50 outflow) ·{' '}
+            <span className="text-green-600">CORR</span> — correlation/quality proxy 0–1 (trader count + market cap) ·{' '}
+            <span className="text-green-600">WHALE%</span> — whale concentration (100% = all held by smart money) ·{' '}
+            click a row — token details, chart, DEX/CEX
           </p>
         </Panel>
 
