@@ -194,8 +194,15 @@ export class NansenService {
       this.successCount++;
       return (await res.json()) as T;
     } catch (err) {
+      const isTimeout =
+        err instanceof Error && (err.name === 'TimeoutError' || err.name === 'AbortError');
+      const msg = isTimeout
+        ? `request timed out after ${this.cfg.nansen.defaults.requestTimeoutMs}ms`
+        : err instanceof Error
+          ? err.message
+          : 'unknown error';
       if (this.lastError === null) {
-        this.lastError = err instanceof Error ? err.message : 'unknown error';
+        this.lastError = msg;
       }
       throw new NansenError(this.lastError, undefined, err);
     } finally {
