@@ -4,6 +4,7 @@ import type { AppConfigShape } from '../config/config.js';
 import {
   CreditSnapshot,
   NansenService,
+  OhlcvCandle,
   SmartMoneyNetflowRow,
 } from '../nansen/nansen.service.js';
 import { calcWeight, clamp01, normalizeWeights, TokenWeight } from './index.analytics.js';
@@ -125,6 +126,15 @@ export class IndexService {
       smartMoneyScore,
       correlation,
       whaleConcentration,
+      tokenAddress: r.token_address,
+      chain: r.chain,
+      marketCapUsd: Number(r.market_cap_usd ?? 0),
+      netflow24hUsd: Number(r.net_flow_24h_usd ?? 0),
+      netflow7dUsd: Number(r.net_flow_7d_usd ?? 0),
+      netflow30dUsd: Number(r.net_flow_30d_usd ?? 0),
+      traderCount: Number(r.trader_count ?? 0),
+      tokenAgeDays: Number(r.token_age_days ?? 0),
+      sectors: r.token_sectors ?? [],
     };
   }
 
@@ -229,6 +239,76 @@ export class IndexService {
         Math.min(r.confidenceCap, r.confidenceBase + (drift / 100) * r.confidenceDriftFactor * 10).toFixed(2),
       ),
       actions,
+    };
+  }
+
+  async tokenDetails(chain: string, address: string, days = 30) {
+    const safeDays = Math.max(7, Math.min(90, Number.isFinite(days) ? Math.floor(days) : 30));
+    const idx = await this.current();
+    const match = idx.tokens.find(
+      (t) =>
+        (t.chain ?? '').toLowerCase() === chain.toLowerCase() &&
+        (t.tokenAddress ?? '').toLowerCase() === address.toLowerCase(),
+    );
+
+    const to = new Date();
+    const from = new Date(to.getTime() - safeDays * 24 * 60 * 60 * 1000);
+    const fromIso = from.toISOString().slice(0, 10);
+    const toIso = to.toISOString().slice(0, 10);
+
+    let candles: OhlcvCandle[] = [];
+    let ohlcvError: string | null = null;
+    try {
+      const resp = await this.nansen.getOhlcvBatch({
+        chain,
+        tokenAddresses: [address],
+        from: fromIso,
+        to: toIso,
+      });
+      candles = resp.tokens?.[0]?.data ?? [];
+    } catch (err) {
+      ohlcvError = err instanceof Error ? err.message : 'unknown error';
+    }
+
+    const series = candles.map((c) => ({
+      date: c.interval_start.slice(0, 10),
+      open: c.open,
+      high: c.high,
+      low: c.low,
+      close: c.close,
+      volumeUsd: c.volume_usd,
+    }));
+
+    const last = series.length > 0 ? series[series.length - 1] : null;
+    const first = series.length > 0 ? series[0] : null;
+    const changePct =
+      last && first && typeof last.close === 'number' && first.close
+        ? Number((((last.close - first.close) / first.close) * 100).toFixed(2))
+        : null;
+
+    return {
+      chain,
+      address,
+      days: safeDays,
+      windowStart: fromIso,
+      windowEnd: toIso,
+      symbol: match?.symbol ?? null,
+      weight: match?.weight ?? null,
+      smartMoneyScore: match?.smartMoneyScore ?? null,
+      correlation: match?.correlation ?? null,
+      whaleConcentration: match?.whaleConcentration ?? null,
+      marketCapUsd: match?.marketCapUsd ?? null,
+      netflow24hUsd: match?.netflow24hUsd ?? null,
+      netflow7dUsd: match?.netflow7dUsd ?? null,
+      netflow30dUsd: match?.netflow30dUsd ?? null,
+      traderCount: match?.traderCount ?? null,
+      tokenAgeDays: match?.tokenAgeDays ?? null,
+      sectors: match?.sectors ?? [],
+      price: last?.close ?? null,
+      changePct,
+      series,
+      ohlcvError,
+      generatedAt: new Date().toISOString(),
     };
   }
 }

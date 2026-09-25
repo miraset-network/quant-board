@@ -6,6 +6,46 @@ export interface Token {
   smartMoneyScore: number;
   correlation: number;
   whaleConcentration: number;
+  tokenAddress?: string;
+  chain?: string;
+  marketCapUsd?: number;
+  netflow24hUsd?: number;
+  netflow7dUsd?: number;
+  netflow30dUsd?: number;
+}
+
+export interface TokenPricePoint {
+  date: string;
+  open: number | null;
+  high: number;
+  low: number;
+  close: number;
+  volumeUsd: number;
+}
+
+export interface TokenDetails {
+  chain: string;
+  address: string;
+  days: number;
+  windowStart: string;
+  windowEnd: string;
+  symbol: string | null;
+  weight: number | null;
+  smartMoneyScore: number | null;
+  correlation: number | null;
+  whaleConcentration: number | null;
+  marketCapUsd: number | null;
+  netflow24hUsd: number | null;
+  netflow7dUsd: number | null;
+  netflow30dUsd: number | null;
+  traderCount: number | null;
+  tokenAgeDays: number | null;
+  sectors: string[];
+  price: number | null;
+  changePct: number | null;
+  series: TokenPricePoint[];
+  ohlcvError: string | null;
+  generatedAt: string;
 }
 
 export interface IndexCredits {
@@ -106,4 +146,6 @@ export const api = {
   arbitrage: () => get<Arbitrage>('/api/arbitrage/opportunities'),
   credits: () => get<IndexCredits & { apiCalls: number; successfulCalls: number; lastError: string | null }>('/api/nansen/credits'),
   backtest: (days = 30) => get<Backtest>(`/api/backtest/run?days=${days}`),
+  token: (chain: string, address: string, days = 30) =>
+    get<TokenDetails>(`/api/index/token/${chain}/${address}?days=${days}`),
 };

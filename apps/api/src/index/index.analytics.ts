@@ -13,6 +13,15 @@ export interface TokenWeight {
   smartMoneyScore: number;
   correlation: number;
   whaleConcentration: number;
+  tokenAddress?: string;
+  chain?: string;
+  marketCapUsd?: number;
+  netflow24hUsd?: number;
+  netflow7dUsd?: number;
+  netflow30dUsd?: number;
+  traderCount?: number;
+  tokenAgeDays?: number;
+  sectors?: string[];
 }
 
 export const DEFAULT_SCORING: ScoringWeights = {

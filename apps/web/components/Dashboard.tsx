@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { api, IndexState, Rebalance, Arbitrage, Backtest } from '../lib/api';
 
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
@@ -96,6 +97,7 @@ function BacktestView({ bt }: { bt: Backtest }) {
 }
 
 export default function Dashboard() {
+  const router = useRouter();
   const [index, setIndex] = useState<IndexState | null>(null);
   const [reb, setReb] = useState<Rebalance | null>(null);
   const [arb, setArb] = useState<Arbitrage | null>(null);
@@ -205,20 +207,51 @@ export default function Dashboard() {
         <Panel title="TOP HOLDINGS">
           <table className="w-full text-xs">
             <thead className="text-green-600">
-              <tr><th className="text-left">#</th><th className="text-left">TOKEN</th><th className="text-right">WEIGHT</th><th className="text-right">SM</th><th className="text-right">CORR</th><th className="text-right">WHALE%</th></tr>
+              <tr>
+                <th className="text-left">#</th>
+                <th className="text-left">TOKEN</th>
+                <th className="text-left">CHAIN</th>
+                <th className="text-right" title="Доля токена в индексе (сумма всех = 100%). Считается из SM + CORR + WHALE%">WEIGHT</th>
+                <th className="text-right" title="Smart Money Score (0–100). Nansen: чистый приток/отток USD от smart-money кошельков за 24ч. >50 = приток, <50 = отток">SM</th>
+                <th className="text-right" title="Correlation proxy (0–1). Внутренняя оценка, насколько токен 'качественный': 50% размер smart-money трейдеров + 50% market cap. Ближе к 1 = крупный и активный">CORR</th>
+                <th className="text-right" title="Whale concentration (0–100%). Доля крупных smart-money трейдеров среди держателей. 100% = почти все держатели — киты; низкая = розница">WHALE%</th>
+                <th className="text-right" title="Нетто-флоу smart money за 24 часа, USD. Зелёный = покупают, красный = продают">FLOW 24H</th>
+              </tr>
             </thead>
             <tbody>
-              {index?.tokens.slice(0, 10).map((t, i) => (
-                <tr key={t.symbol} className="border-t border-green-950">
-                  <td>{i + 1}</td><td className="text-cyan-300">{t.symbol}</td>
-                  <td className="text-right">{t.weight}%</td>
-                  <td className="text-right">{t.smartMoneyScore}</td>
-                  <td className="text-right">{t.correlation.toFixed(2)}</td>
-                  <td className="text-right">{t.whaleConcentration}%</td>
-                </tr>
-              ))}
+              {index?.tokens.slice(0, 10).map((t, i) => {
+                const href = t.chain && t.tokenAddress ? `/token/${t.chain}/${t.tokenAddress}` : null;
+                const flow = t.netflow24hUsd ?? 0;
+                return (
+                  <tr
+                    key={t.symbol}
+                    onClick={href ? () => router.push(href) : undefined}
+                    title={href ? `Открыть детали ${t.symbol} на ${t.chain}` : undefined}
+                    className={`group border-t border-green-950 transition-colors hover:bg-green-950/40 ${href ? 'cursor-pointer' : ''}`}
+                  >
+                    <td>{i + 1}</td>
+                    <td className="text-cyan-300 group-hover:underline">{t.symbol}</td>
+                    <td className="text-green-700">{t.chain ?? '—'}</td>
+                    <td className="text-right">{t.weight}%</td>
+                    <td className="text-right">{t.smartMoneyScore}</td>
+                    <td className="text-right">{t.correlation.toFixed(2)}</td>
+                    <td className="text-right">{t.whaleConcentration}%</td>
+                    <td className={`text-right ${flow > 0 ? 'text-green-400' : flow < 0 ? 'text-red-400' : ''}`}>
+                      {flow === 0
+                        ? '—'
+                        : `${flow > 0 ? '+' : '-'}$${Math.abs(flow) >= 1000 ? `${(Math.abs(flow) / 1000).toFixed(1)}k` : Math.abs(flow).toFixed(0)}`}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
+          <p className="mt-2 border-t border-green-950 pt-2 text-[10px] leading-relaxed text-green-700">
+            <span className="text-green-600">SM</span> — smart-money score 0–100 (Nansen netflow 24h; &gt;50 приток, &lt;50 отток) ·{' '}
+            <span className="text-green-600">CORR</span> — прокси корреляции/качества 0–1 (trader count + market cap) ·{' '}
+            <span className="text-green-600">WHALE%</span> — концентрация у китов (100% = всё у smart money) ·{' '}
+            нажми на строку — детали токена, график, DEX/CEX
+          </p>
         </Panel>
 
         <Panel title={`BACKTEST (${bt?.days ?? 30}D BUY-&-HOLD)`}>
