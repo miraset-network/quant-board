@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, IndexState, Rebalance, Arbitrage, Backtest } from '../lib/api';
+import FomoButton from './FomoButton';
 
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -133,7 +134,10 @@ export default function Dashboard() {
     <div className="min-h-screen bg-[#0a0e0a] font-mono text-green-400">
       <header className="flex items-center justify-between border-b border-green-800 px-6 py-3">
         <span className="text-lg font-bold tracking-widest">FOMO INDEXES</span>
-        <span className="text-xs text-green-600">[LIVE] ⚡ {clock}</span>
+        <div className="flex items-center gap-4">
+          <FomoButton />
+          <span className="text-xs text-green-600">[LIVE] ⚡ {clock}</span>
+        </div>
       </header>
 
       <main className="grid gap-4 p-6 lg:grid-cols-2">
