@@ -67,6 +67,8 @@ export interface AppConfigShape {
     arbDiv: number;
   };
   cache: { ttlSeconds: number };
+  redis: { url: string | null };
+  indicators: { riskCacheTtlSeconds: number; minCreditsForRisk: number };
   port: number;
 }
 
@@ -123,6 +125,11 @@ export function loadConfig(): AppConfigShape {
       arbDiv: num(process.env.ARB_DIV_THRESHOLD, 0.05, 'ARB_DIV_THRESHOLD'),
     },
     cache: { ttlSeconds: num(process.env.CACHE_TTL_SECONDS, 300, 'CACHE_TTL_SECONDS') },
+    redis: { url: str(process.env.REDIS_URL, '') || null },
+    indicators: {
+      riskCacheTtlSeconds: num(process.env.RISK_CACHE_TTL_SECONDS, 86400, 'RISK_CACHE_TTL_SECONDS'),
+      minCreditsForRisk: num(process.env.MIN_CREDITS_FOR_RISK, 20, 'MIN_CREDITS_FOR_RISK'),
+    },
     port: num(process.env.PORT_API ?? process.env.PORT, 3001, 'PORT_API'),
   };
 }

@@ -23,4 +23,9 @@ export class IndexController {
   ) {
     return this.indexService.tokenDetails(chain, address, Number(days ?? 30));
   }
+
+  @Get('token/:chain/:address/risk')
+  tokenRisk(@Param('chain') chain: string, @Param('address') address: string) {
+    return this.indexService.tokenRisk(chain, address);
+  }
 }

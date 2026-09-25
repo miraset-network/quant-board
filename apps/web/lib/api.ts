@@ -140,6 +140,31 @@ export interface Backtest {
   generatedAt: string;
 }
 
+export interface TokenRiskIndicator {
+  type: string;
+  score: 'low' | 'medium' | 'high' | 'bearish' | 'neutral' | 'bullish' | null;
+  signal: number | null;
+  percentile: number | null;
+  lastTriggerOn: string | null;
+}
+
+export interface TokenRisk {
+  chain: string;
+  address: string;
+  skipped: boolean;
+  cached: boolean;
+  reason?: string;
+  error?: string;
+  tokenInfo: {
+    market_cap_usd?: number;
+    market_cap_group?: string;
+    is_stablecoin?: boolean;
+  } | null;
+  riskIndicators: TokenRiskIndicator[] | null;
+  rewardIndicators: TokenRiskIndicator[] | null;
+  generatedAt?: string;
+}
+
 export const api = {
   index: () => get<IndexState>('/api/index/current'),
   rebalance: () => get<Rebalance>('/api/index/rebalance'),
@@ -148,4 +173,6 @@ export const api = {
   backtest: (days = 30) => get<Backtest>(`/api/backtest/run?days=${days}`),
   token: (chain: string, address: string, days = 30) =>
     get<TokenDetails>(`/api/index/token/${chain}/${address}?days=${days}`),
+  tokenRisk: (chain: string, address: string) =>
+    get<TokenRisk>(`/api/index/token/${chain}/${address}/risk`),
 };

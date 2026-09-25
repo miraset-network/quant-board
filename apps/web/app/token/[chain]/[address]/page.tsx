@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { api, TokenDetails } from '@/lib/api';
+import { api, TokenDetails, TokenRisk, TokenRiskIndicator } from '@/lib/api';
 
 const CHAIN_META: Record<string, { explorer: (a: string) => string; dexscreener: string; gecko: string }> = {
   ethereum: {
@@ -262,11 +262,155 @@ function PriceChart({ series }: { series: TokenDetails['series'] }) {
   );
 }
 
+function riskColor(score: string | null): string {
+  switch (score) {
+    case 'low':
+    case 'bullish':
+      return 'bg-green-950 text-green-400 border-green-700';
+    case 'medium':
+    case 'neutral':
+      return 'bg-amber-950 text-amber-400 border-amber-700';
+    case 'high':
+    case 'bearish':
+      return 'bg-red-950 text-red-400 border-red-700';
+    default:
+      return 'bg-green-950 text-green-700 border-green-900';
+  }
+}
+
+function RiskRow({ label, ind }: { label: string; ind: TokenRiskIndicator | null }) {
+  if (!ind) {
+    return (
+      <div className="flex items-center justify-between border-b border-green-950 py-1.5 text-xs">
+        <span className="text-green-700">{label}</span>
+        <span className="text-green-800">—</span>
+      </div>
+    );
+  }
+  return (
+    <div className="flex items-center justify-between border-b border-green-950 py-1.5 text-xs">
+      <div className="flex items-center gap-2">
+        <span className="text-green-400">{label}</span>
+        {ind.lastTriggerOn && <span className="text-[9px] text-green-800">since {ind.lastTriggerOn}</span>}
+      </div>
+      <div className="flex items-center gap-2">
+        {ind.percentile !== null && (
+          <div className="flex items-center gap-1">
+            <div className="h-1 w-12 overflow-hidden rounded bg-green-950">
+              <div
+                className={`h-full ${ind.percentile >= 75 ? 'bg-red-400' : ind.percentile >= 50 ? 'bg-amber-400' : 'bg-green-400'}`}
+                style={{ width: `${Math.min(100, ind.percentile)}%` }}
+              />
+            </div>
+            <span className="w-7 text-right text-[10px] text-green-700">{ind.percentile.toFixed(0)}</span>
+          </div>
+        )}
+        <span className={`inline-block border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${riskColor(ind.score)}`}>
+          {ind.score ?? '?'}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function RiskPanel({ risk }: { risk: TokenRisk | null }) {
+  if (!risk) {
+    return (
+      <section className="border border-green-800 bg-black/60 p-4 lg:col-span-3">
+        <h2 className="mb-3 border-b border-green-900 pb-2 text-sm tracking-widest text-green-500">
+          RISK / REWARD — NANSEN INDICATORS
+        </h2>
+        <p className="text-xs text-green-700">loading…</p>
+      </section>
+    );
+  }
+
+  if (risk.skipped) {
+    return (
+      <section className="border border-green-800 bg-black/60 p-4 lg:col-span-3">
+        <h2 className="mb-3 border-b border-green-900 pb-2 text-sm tracking-widest text-green-500">
+          RISK / REWARD — NANSEN INDICATORS
+        </h2>
+        <p className="text-xs text-amber-400">⚠ {risk.reason ?? 'skipped to save credits'}</p>
+      </section>
+    );
+  }
+
+  if (risk.error) {
+    return (
+      <section className="border border-green-800 bg-black/60 p-4 lg:col-span-3">
+        <h2 className="mb-3 border-b border-green-900 pb-2 text-sm tracking-widest text-green-500">
+          RISK / REWARD — NANSEN INDICATORS
+        </h2>
+        <p className="text-xs text-red-400">{risk.error}</p>
+      </section>
+    );
+  }
+
+  if (!risk.riskIndicators || risk.riskIndicators.length === 0) {
+    return (
+      <section className="border border-green-800 bg-black/60 p-4 lg:col-span-3">
+        <h2 className="mb-3 border-b border-green-900 pb-2 text-sm tracking-widest text-green-500">
+          RISK / REWARD — NANSEN INDICATORS
+        </h2>
+        <p className="text-xs text-green-700">нет данных по этому токену</p>
+      </section>
+    );
+  }
+
+  const riskByType = new Map(risk.riskIndicators.map((i) => [i.type, i]));
+  const rewardByType = new Map((risk.rewardIndicators ?? []).map((i) => [i.type, i]));
+  const overallRisk: 'LOW' | 'MEDIUM' | 'HIGH' =
+    risk.riskIndicators.some((i) => i.score === 'high') ? 'HIGH'
+    : risk.riskIndicators.some((i) => i.score === 'medium') ? 'MEDIUM'
+    : 'LOW';
+  const overallClass = overallRisk === 'HIGH' ? 'text-red-400' : overallRisk === 'MEDIUM' ? 'text-amber-400' : 'text-green-400';
+
+  return (
+    <section className="border border-green-800 bg-black/60 p-4 lg:col-span-3">
+      <div className="mb-3 flex items-baseline justify-between border-b border-green-900 pb-2">
+        <h2 className="text-sm tracking-widest text-green-500">
+          RISK / REWARD — NANSEN INDICATORS
+          {risk.cached && <span className="ml-2 text-[10px] text-green-700">(cached, 24h TTL — экономим 5 cr)</span>}
+        </h2>
+        <span className={`text-xs font-bold ${overallClass}`}>RISK: {overallRisk}</span>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <div>
+          <div className="mb-1 text-[10px] uppercase tracking-widest text-red-400/80">Risk (чем хуже — тем больше)</div>
+          <RiskRow label="BTC reflexivity" ind={riskByType.get('btc-reflexivity') ?? null} />
+          <RiskRow label="Liquidity risk" ind={riskByType.get('liquidity-risk') ?? null} />
+          <RiskRow label="Concentration risk" ind={riskByType.get('concentration-risk') ?? null} />
+          <RiskRow label="Supply inflation" ind={riskByType.get('token-supply-inflation') ?? null} />
+        </div>
+        <div>
+          <div className="mb-1 text-[10px] uppercase tracking-widest text-cyan-400/80">Reward (чем лучше — тем больше alpha)</div>
+          <RiskRow label="Chain TVL" ind={rewardByType.get('chain-tvl') ?? null} />
+          <RiskRow label="Trading range" ind={rewardByType.get('trading-range') ?? null} />
+          <RiskRow label="Price momentum" ind={rewardByType.get('price-momentum') ?? null} />
+          <RiskRow label="Chain fees" ind={rewardByType.get('chain-fees') ?? null} />
+          <RiskRow label="CEX flows" ind={rewardByType.get('cex-flows') ?? null} />
+          <RiskRow label="Funding rate" ind={rewardByType.get('funding-rate') ?? null} />
+        </div>
+      </div>
+
+      {risk.tokenInfo && (
+        <div className="mt-3 border-t border-green-950 pt-2 text-[10px] text-green-700">
+          {risk.tokenInfo.market_cap_group && <span>cap group: <span className="text-cyan-300">{risk.tokenInfo.market_cap_group}</span></span>}
+          {risk.tokenInfo.is_stablecoin && <span className="ml-3 text-amber-400">stablecoin</span>}
+        </div>
+      )}
+    </section>
+  );
+}
+
 export default function TokenPage() {
   const params = useParams<{ chain: string; address: string }>();
   const chain = decodeURIComponent(params.chain ?? '');
   const address = decodeURIComponent(params.address ?? '');
   const [data, setData] = useState<TokenDetails | null>(null);
+  const [risk, setRisk] = useState<TokenRisk | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
@@ -275,6 +419,7 @@ export default function TokenPage() {
       .token(chain, address, 30)
       .then(setData)
       .catch((e) => setErr(e instanceof Error ? e.message : 'fetch failed'));
+    api.tokenRisk(chain, address).then(setRisk).catch(() => setRisk(null));
   }, [chain, address]);
 
   const meta = CHAIN_META[chain.toLowerCase()];
@@ -389,6 +534,9 @@ export default function TokenPage() {
                 <p className="mt-2 text-xs text-amber-400">OHLCV error: {data.ohlcvError}</p>
               )}
             </section>
+
+            {/* Risk / Reward indicators from Nansen TGM */}
+            <RiskPanel risk={risk} />
 
             {/* Where to trade */}
             <section className="border border-green-800 bg-black/60 p-4 lg:col-span-3">

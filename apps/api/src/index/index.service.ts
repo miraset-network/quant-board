@@ -1,11 +1,14 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { APP_CONFIG } from '../config/config.js';
 import type { AppConfigShape } from '../config/config.js';
+import { CacheService } from '../cache/cache.service.js';
 import {
   CreditSnapshot,
   NansenService,
   OhlcvCandle,
   SmartMoneyNetflowRow,
+  TgmIndicator,
+  TgmIndicatorsResponse,
 } from '../nansen/nansen.service.js';
 import { calcWeight, clamp01, normalizeWeights, TokenWeight } from './index.analytics.js';
 
@@ -40,6 +43,7 @@ export class IndexService {
 
   constructor(
     private readonly nansen: NansenService,
+    private readonly cacheStore: CacheService,
     @Inject(APP_CONFIG) private readonly cfg: AppConfigShape,
   ) {
     this.ttl = this.cfg.cache.ttlSeconds * 1000;
@@ -308,6 +312,66 @@ export class IndexService {
       changePct,
       series,
       ohlcvError,
+      generatedAt: new Date().toISOString(),
+    };
+  }
+
+  async tokenRisk(chain: string, address: string) {
+    const cacheKey = `tgm:indicators:${chain.toLowerCase()}:${address.toLowerCase()}`;
+    const cached = await this.cacheStore.get<TgmIndicatorsResponse>(cacheKey);
+    if (cached) {
+      return { ...this.shapeRisk(chain, address, cached), cached: true };
+    }
+
+    const credits = this.buildCredits();
+    const minRequired = this.cfg.indicators.minCreditsForRisk;
+    if (credits.totalRemaining !== null && credits.totalRemaining < minRequired) {
+      return {
+        chain,
+        address,
+        skipped: true,
+        reason: `credits low (${credits.totalRemaining} < ${minRequired}), skipping indicators call`,
+        cached: false,
+        riskIndicators: null,
+        rewardIndicators: null,
+        tokenInfo: null,
+      };
+    }
+
+    try {
+      const resp = await this.nansen.getTokenIndicators(chain, address);
+      await this.cacheStore.set(cacheKey, resp, this.cfg.indicators.riskCacheTtlSeconds);
+      return { ...this.shapeRisk(chain, address, resp), cached: false };
+    } catch (err) {
+      return {
+        chain,
+        address,
+        skipped: false,
+        cached: false,
+        error: err instanceof Error ? err.message : 'unknown error',
+        riskIndicators: null,
+        rewardIndicators: null,
+        tokenInfo: null,
+      };
+    }
+  }
+
+  private shapeRisk(chain: string, address: string, resp: TgmIndicatorsResponse) {
+    const fmtIndicator = (i: TgmIndicator) => ({
+      type: i.indicator_type,
+      score: i.score ?? null,
+      signal: i.signal ?? null,
+      percentile: i.signal_percentile ?? null,
+      lastTriggerOn: i.last_trigger_on ?? null,
+    });
+    return {
+      chain,
+      address,
+      skipped: false,
+      cached: false,
+      tokenInfo: resp.token_info ?? null,
+      riskIndicators: (resp.risk_indicators ?? []).map(fmtIndicator),
+      rewardIndicators: (resp.reward_indicators ?? []).map(fmtIndicator),
       generatedAt: new Date().toISOString(),
     };
   }

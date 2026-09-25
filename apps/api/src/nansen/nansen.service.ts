@@ -57,6 +57,26 @@ export interface CreditSnapshot {
   updatedAt: string;
 }
 
+export interface TgmIndicator {
+  indicator_type: string;
+  score?: string;
+  signal?: number;
+  signal_percentile?: number;
+  last_trigger_on?: string;
+}
+
+export interface TgmIndicatorsResponse {
+  token_address: string;
+  chain: string;
+  token_info?: {
+    market_cap_usd?: number;
+    market_cap_group?: string;
+    is_stablecoin?: boolean;
+  };
+  risk_indicators: TgmIndicator[];
+  reward_indicators: TgmIndicator[];
+}
+
 export interface AccountResponse {
   plan?: string;
   credits?: { included?: { remaining?: number; limit?: number }; purchased?: { remaining?: number } };
@@ -231,6 +251,13 @@ export class NansenService {
       timeframe: opts.timeframe ?? this.cfg.nansen.defaults.ohlcvTimeframe,
       token_addresses: opts.tokenAddresses,
       date: { from: opts.from, to: opts.to },
+    });
+  }
+
+  async getTokenIndicators(chain: string, tokenAddress: string): Promise<TgmIndicatorsResponse> {
+    return this.post<TgmIndicatorsResponse>('/tgm/indicators', {
+      chain,
+      token_address: tokenAddress,
     });
   }
 }

@@ -3,6 +3,7 @@ import { IndexService } from './index.service.js';
 import { NansenError, NansenService, SmartMoneyNetflowRow } from '../nansen/nansen.service.js';
 import { loadConfig } from '../config/config.js';
 import type { TokenWeight } from './index.analytics.js';
+import { CacheService } from '../cache/cache.service.js';
 
 const baseRow = (over: Partial<SmartMoneyNetflowRow> = {}): SmartMoneyNetflowRow => ({
   token_address: '0xeth',
@@ -71,7 +72,8 @@ describe('IndexService', () => {
     for (const [k, v] of Object.entries(envOverrides)) process.env[k] = v;
     const cfg = loadConfig();
     nansen = new FakeNansen();
-    svc = new IndexService(nansen as unknown as NansenService, cfg);
+    const cache = new CacheService(cfg);
+    svc = new IndexService(nansen as unknown as NansenService, cache, cfg);
   };
 
   beforeEach(() => {
