@@ -14,11 +14,22 @@ function pick(current: number | null): number {
 
 export default function FomoButton() {
   const [open, setOpen] = useState(false);
+  const [flash, setFlash] = useState<'open' | 'close' | null>(null);
   const [idx, setIdx] = useState<number | null>(null);
 
   const openModal = () => {
     setIdx(pick(null));
-    setOpen(true);
+    setFlash('open');
+    setTimeout(() => {
+      setFlash(null);
+      setOpen(true);
+    }, 300);
+  };
+
+  const closeModal = () => {
+    setOpen(false);
+    setFlash('close');
+    setTimeout(() => setFlash(null), 300);
   };
 
   const reroll = () => setIdx(pick(idx));
@@ -26,7 +37,7 @@ export default function FomoButton() {
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
+      if (e.key === 'Escape') closeModal();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -41,15 +52,36 @@ export default function FomoButton() {
         onClick={openModal}
         className="border border-red-500 bg-red-500/10 px-4 py-1.5 text-xs font-bold tracking-widest text-red-400 transition-colors hover:bg-red-500/30 hover:text-red-300"
       >
-        ▲ FOMO
+        <span className="inline-flex items-center gap-1.5">
+          <img
+            src="/-2147483648_-214870.webp"
+            alt=""
+            className="h-4 w-4 object-contain"
+          />
+          FOMO
+        </span>
       </button>
+
+      {flash && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+          <img
+            src={
+              flash === 'open'
+                ? '/-2147483648_-214868.webp'
+                : '/-2147483648_-214872.webp'
+            }
+            alt=""
+            className="h-64 w-64 object-contain"
+          />
+        </div>
+      )}
 
       {open && (
         <div
           role="dialog"
           aria-modal="true"
           aria-label="FOMO wisdom"
-          onClick={() => setOpen(false)}
+          onClick={closeModal}
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
         >
           <div
@@ -62,7 +94,7 @@ export default function FomoButton() {
               </span>
               <button
                 type="button"
-                onClick={() => setOpen(false)}
+                onClick={closeModal}
                 aria-label="Close"
                 className="text-red-500 hover:text-red-300"
               >
@@ -87,7 +119,7 @@ export default function FomoButton() {
               </button>
               <button
                 type="button"
-                onClick={() => setOpen(false)}
+                onClick={closeModal}
                 className="border border-red-700 px-3 py-1 text-red-400 transition-colors hover:bg-red-950/40"
               >
                 I FEEL CALMER →
