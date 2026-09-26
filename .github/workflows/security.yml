@@ -1,0 +1,44 @@
+name: Security
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  secret-scan:
+    name: Secret / data-leakage scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # full history so gitleaks can scan past commits
+
+      - name: Run gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITLEAKS_ENABLE_SUMMARY: 'true'
+
+  tracked-secrets-check:
+    name: Ensure no .env files are tracked
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fail if env files are committed
+        run: |
+          if git ls-files | grep -E '(^|/)\.env(\.|$)' | grep -v '\.example$'; then
+            echo "ERROR: environment file tracked in git (possible data leakage)"
+            exit 1
+          fi
+          echo "OK: no .env files tracked"
+
+      - name: Fail on hardcoded API-key-like strings
+        run: |
+          if grep -rnE '(api[_-]?key|secret|token|password)["'"'"']?\s*[:=]\s*["'"'"'][A-Za-z0-9_\-]{16,}' \
+              --include='*.ts' --include='*.tsx' --include='*.js' --include='*.py' \
+              --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=.next \
+              apps agents packages 2>/dev/null; then
+            echo "ERROR: possible hardcoded secret found"
+            exit 1
+          fi
+          echo "OK: no hardcoded secrets detected"

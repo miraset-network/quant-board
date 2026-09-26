@@ -1,0 +1,56 @@
+{
+  "nansen": {
+    "baseUrl": "https://api.nansen.ai/api/v1",
+    "endpoints": {
+      "smartMoneyNetflow": "/smart-money/netflow",
+      "smartMoneyActivity": "/smart-money/activity",
+      "tokenOhlcv": "/tgm/token-ohlcv",
+      "account": "/account"
+    },
+    "defaults": {
+      "requestTimeoutMs": 15000,
+      "smartMoneyChains": ["ethereum", "solana"],
+      "smartMoneyPerPage": 50,
+      "smartMoneyPage": 1,
+      "ohlcvTimeframe": "1d",
+      "ohlcvLookbackDays": 30
+    }
+  },
+  "index": {
+    "name": "Top Smart Money Netflow",
+    "topN": 50,
+    "scoring": {
+      "netflowWeight": 0.5,
+      "traderCountWeight": 0.3,
+      "marketCapWeight": 0.2,
+      "scoreScaleUsd": 100000,
+      "traderCountScale": 100,
+      "marketCapScaleUsd": 1000000000
+    },
+    "rebalance": {
+      "holdThresholdPct": 0.5,
+      "initialTiltPct": 1.5,
+      "targetTiltPct": 1.2,
+      "minWeightPct": 0.5,
+      "confidenceBase": 0.5,
+      "confidenceDriftFactor": 0.1,
+      "confidenceCap": 0.95
+    },
+    "messages": {
+      "nansenEmpty": "Nansen returned no netflow data",
+      "nansenError": "Nansen API error"
+    }
+  },
+  "arbitrage": {
+    "topN": 50,
+    "minCandles": 5,
+    "statArb": {
+      "zEntryThreshold": 1.5,
+      "zExitThreshold": 0.25,
+      "maxHalfLifeDays": 10,
+      "minCorrForCointegration": 0.7,
+      "minWindow": 7,
+      "maxWindow": 60
+    }
+  }
+}
