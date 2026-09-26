@@ -1,7 +1,0 @@
-packages:
-  - "apps/*"
-  - "packages/*"
-allowBuilds:
-  '@daochild/agents-config': true
-  msgpackr-extract: true
-  unrs-resolver: true

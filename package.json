@@ -4,15 +4,20 @@
   "scripts": {
     "dev": "turbo dev",
     "build": "turbo build",
-    "clean": "turbo clean && rm -rf node_modules"
+    "clean": "turbo clean && rm -rf node_modules",
+    "postinstall": "[ -n \"$QUANT_BOARD_POSTINSTALL\" ] || { export QUANT_BOARD_POSTINSTALL=1; for d in apps/api apps/web packages/shared; do [ -f \"$d/package.json\" ] && (cd \"$d\" && bun install); done; }"
   },
   "devDependencies": {
     "@daochild/agents-config": "^1.2.1",
     "@opencode-ai/sdk": "^1.18.32",
     "turbo": "^2.1.0"
   },
-  "packageManager": "pnpm@12.6.0",
+  "packageManager": "bun@1.4.2",
   "engines": {
     "node": ">=22"
-  }
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
 }
