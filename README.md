@@ -9,20 +9,12 @@ A Nansen-powered smart-money index dashboard built for the Nansen Meridian Build
 
 ## Quick start
 
-> Package managers are mixed. The root uses pnpm, but each app was installed with **bun** and has its own `bun.lock`.
-
 ```bash
-# 1. API
-cd apps/api
 cp .env.example .env
 # edit .env and add NANSEN_API_KEY
-bun install
-bun run start:dev
 
-# 2. Web (in a new terminal, from repo root)
-cd apps/web
-cp .env.example .env  # if you need NEXT_PUBLIC_API_URL
 bun install
+bun run build
 bun run dev
 ```
 
