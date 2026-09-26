@@ -267,6 +267,8 @@ export class NansenService {
     });
   }
 
+  private static readonly OHLCV_MAX_ADDRESSES = 10;
+
   async getOhlcvBatch(opts: {
     chain: string;
     timeframe?: string;
@@ -274,12 +276,29 @@ export class NansenService {
     from: string;
     to: string;
   }): Promise<OhlcvBatchResponse> {
-    return this.post<OhlcvBatchResponse>(this.cfg.nansen.endpoints.tokenOhlcv, {
-      chain: opts.chain,
-      timeframe: opts.timeframe ?? this.cfg.nansen.defaults.ohlcvTimeframe,
-      token_addresses: opts.tokenAddresses,
-      date: { from: opts.from, to: opts.to },
-    });
+    const timeframe = opts.timeframe ?? this.cfg.nansen.defaults.ohlcvTimeframe;
+    const max = NansenService.OHLCV_MAX_ADDRESSES;
+    if (opts.tokenAddresses.length <= max) {
+      return this.post<OhlcvBatchResponse>(this.cfg.nansen.endpoints.tokenOhlcv, {
+        chain: opts.chain,
+        timeframe,
+        token_addresses: opts.tokenAddresses,
+        date: { from: opts.from, to: opts.to },
+      });
+    }
+
+    const tokens: OhlcvBatchResponse['tokens'] = [];
+    for (let i = 0; i < opts.tokenAddresses.length; i += max) {
+      const chunk = opts.tokenAddresses.slice(i, i + max);
+      const resp = await this.post<OhlcvBatchResponse>(this.cfg.nansen.endpoints.tokenOhlcv, {
+        chain: opts.chain,
+        timeframe,
+        token_addresses: chunk,
+        date: { from: opts.from, to: opts.to },
+      });
+      tokens.push(...(resp.tokens ?? []));
+    }
+    return { chain: opts.chain, timeframe, tokens };
   }
 
   async getTokenIndicators(chain: string, tokenAddress: string): Promise<TgmIndicatorsResponse> {
