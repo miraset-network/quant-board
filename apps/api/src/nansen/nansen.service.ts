@@ -1,6 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { APP_CONFIG } from '../config/config.js';
 import type { AppConfigShape } from '../config/config.js';
+import { DatabaseService } from '../database/database.service.js';
 
 export class NansenError extends Error {
   constructor(message: string, public readonly status?: number, public readonly cause?: unknown) {
@@ -82,6 +83,21 @@ export interface AccountResponse {
   credits?: { included?: { remaining?: number; limit?: number }; purchased?: { remaining?: number } };
 }
 
+export interface WalletActivityRow {
+  wallet_address: string;
+  chain: string;
+  net_flow_usd: number;
+  token_symbol?: string;
+  token_address?: string;
+  transaction_count?: number;
+  last_activity?: string;
+}
+
+export interface WalletActivityResponse {
+  data: WalletActivityRow[];
+  pagination?: { page: number; per_page: number; is_last_page?: boolean };
+}
+
 @Injectable()
 export class NansenService {
   private readonly logger = new Logger(NansenService.name);
@@ -98,7 +114,10 @@ export class NansenService {
     updatedAt: new Date(0).toISOString(),
   };
 
-  constructor(@Inject(APP_CONFIG) private readonly cfg: AppConfigShape) {}
+  constructor(
+    @Inject(APP_CONFIG) private readonly cfg: AppConfigShape,
+    private readonly db: DatabaseService,
+  ) {}
 
   getCallCount(): number {
     return this.callCount;
@@ -189,10 +208,12 @@ export class NansenService {
         }
         const msg = `Nansen ${res.status} ${detail}`;
         this.lastError = msg;
-        throw new NansenError(msg, res.status);
-      }
-      this.successCount++;
-      return (await res.json()) as T;
+      void this.db.logApiCall(path, false);
+      throw new NansenError(msg, res.status);
+    }
+    this.successCount++;
+    void this.db.logApiCall(path, true);
+    return (await res.json()) as T;
     } catch (err) {
       const isTimeout =
         err instanceof Error && (err.name === 'TimeoutError' || err.name === 'AbortError');
@@ -265,6 +286,17 @@ export class NansenService {
     return this.post<TgmIndicatorsResponse>('/tgm/indicators', {
       chain,
       token_address: tokenAddress,
+    });
+  }
+
+  async getWalletActivity(opts: {
+    chain?: string;
+    perPage?: number;
+    page?: number;
+  } = {}): Promise<WalletActivityResponse> {
+    return this.post<WalletActivityResponse>(this.cfg.nansen.endpoints.smartMoneyActivity, {
+      chain: opts.chain ?? this.cfg.nansen.defaults.smartMoneyChains[0],
+      pagination: { page: opts.page ?? 1, per_page: opts.perPage ?? 20 },
     });
   }
 }

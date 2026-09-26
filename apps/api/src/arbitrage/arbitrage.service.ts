@@ -1,4 +1,8 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
+import {
+  type ArbitrageOpportunity,
+  type ArbitrageResult,
+} from '@quant-board/shared';
 import { APP_CONFIG } from '../config/config.js';
 import type { AppConfigShape } from '../config/config.js';
 import { NansenService, OhlcvCandle } from '../nansen/nansen.service.js';
@@ -11,27 +15,11 @@ import {
   type SpreadStats,
 } from '../index/index.analytics.js';
 
+export type { ArbitrageOpportunity, ArbitrageResult };
+
 export interface HedgeNotionals {
   legA: number;
   legB: number;
-}
-
-export interface ArbitrageOpportunity {
-  pair: string;
-  correlation: number;
-  divergence: number;
-  signal: string;
-  expectedReturn: string;
-  candlesUsed: number;
-  beta: number;
-  zScore: number;
-  halfLifeDays: number;
-  halfLifeOk: boolean;
-  spreadMean: number;
-  spreadStd: number;
-  notionalRatio: string;
-  hedgeNotionals: HedgeNotionals;
-  exitTarget: number;
 }
 
 @Injectable()
@@ -44,7 +32,7 @@ export class ArbitrageService {
   private readonly lookbackDays: number;
   private readonly ttl: number;
   private readonly statArb: AppConfigShape['arbitrage']['statArb'];
-  private cache: { data: any; at: number } | null = null;
+  private cache: { data: ArbitrageResult; at: number } | null = null;
 
   constructor(
     private readonly index: IndexService,

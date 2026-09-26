@@ -297,7 +297,7 @@ export default function Dashboard() {
       </main>
 
       <footer className="border-t border-green-800 px-6 py-2 text-center text-xs text-green-700">
-        ⟳ auto-refresh 5m · backend: :3001 · Nansen-powered
+        ⟳ auto-refresh 30s (backtest 5m) · backend: :3001 · Nansen-powered
       </footer>
     </div>
   );

@@ -14,7 +14,7 @@ export interface AppConfigShape {
   nansen: {
     baseUrl: string;
     apiKey: string;
-    endpoints: { smartMoneyNetflow: string; tokenOhlcv: string; account: string };
+    endpoints: { smartMoneyNetflow: string; smartMoneyActivity: string; tokenOhlcv: string; account: string };
     defaults: {
       requestTimeoutMs: number;
       smartMoneyChains: string[];
@@ -68,6 +68,7 @@ export interface AppConfigShape {
   };
   cache: { ttlSeconds: number };
   redis: { url: string | null };
+  database: { url: string | null };
   indicators: { riskCacheTtlSeconds: number; minCreditsForRisk: number };
   port: number;
 }
@@ -126,6 +127,7 @@ export function loadConfig(): AppConfigShape {
     },
     cache: { ttlSeconds: num(process.env.CACHE_TTL_SECONDS, 300, 'CACHE_TTL_SECONDS') },
     redis: { url: str(process.env.REDIS_URL, '') || null },
+    database: { url: str(process.env.DATABASE_URL, '') || null },
     indicators: {
       riskCacheTtlSeconds: num(process.env.RISK_CACHE_TTL_SECONDS, 86400, 'RISK_CACHE_TTL_SECONDS'),
       minCreditsForRisk: num(process.env.MIN_CREDITS_FOR_RISK, 20, 'MIN_CREDITS_FOR_RISK'),

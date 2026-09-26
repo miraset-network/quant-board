@@ -14,7 +14,7 @@ Hackathon project ("FOMO Indexes") for the Nansen Meridian Buildathon (Sep 22–
 
 ## Package managers are mixed — don't assume
 
-Root declares `pnpm` + pnpm workspace + turbo, but there is **no root lockfile**. `apps/api` and `apps/web` each have their own `bun.lock` (web also pins `packageManager: bun@1.4.2`; api additionally has a stray `package-lock.json`). Installs were done per-app with bun. Run scripts from inside each app directory.
+Root declares `pnpm` + pnpm workspace + turbo and now has a **`pnpm-lock.yaml`**. `apps/api` and `apps/web` each have their own `bun.lock` (web also pins `packageManager: bun@1.4.2`; api additionally has a stray `package-lock.json`). Installs were done per-app with bun, and that is the supported workflow. Run scripts from inside each app directory.
 
 ## Commands
 
@@ -23,5 +23,10 @@ Turbo at the root only defines `dev` / `build` / `clean` — there is **no** `tu
 Per-app commands live in **`apps/api/AGENTS.md`** and **`apps/web/AGENTS.md`** — read those before working in either app. Highlights:
 
 - `apps/api`: `bun run start:dev` / `test` / `test:e2e` / `lint` (oxlint, not eslint) / `build` (doubles as typecheck)
-- `apps/web`: `bun run dev` / `build` / `lint`; no tests; `next build` typechecks
+  - Implemented endpoints: `/api/index/current`, `/api/index/rebalance`, `/api/index/token/:chain/:address`, `/api/index/token/:chain/:address/risk`, `/api/arbitrage/opportunities`, `/api/backtest/run`, `/api/nansen/credits`, `/api/nansen/wallet-activity`
+- `apps/web`: `bun run dev` / `build` / `lint`; no tests; `next build` typechecks. Dashboard polls `/api/index/current`, `/api/index/rebalance`, `/api/arbitrage/opportunities` every 30s and `/api/backtest/run` every 5m.
 - Python agents (`agents/daily_smta`, `agents/token_god_mode`): `uv pip install -e ".[dev]"`, own `.env` from `.env.example`, run `python -m daily_smta` / `token-god-mode` CLI, verify with `pytest -v` + `ruff check .` (config in each `pyproject.toml`: py311+, line-length 100)
+
+## Shared package
+
+- `packages/shared` (`@quant-board/shared`) ships TypeScript types, but neither `apps/api` nor `apps/web` imports it yet. The web app duplicates API types in `apps/web/lib/api.ts`.

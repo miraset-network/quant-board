@@ -3,6 +3,7 @@
     "baseUrl": "https://api.nansen.ai/api/v1",
     "endpoints": {
       "smartMoneyNetflow": "/smart-money/netflow",
+      "smartMoneyActivity": "/smart-money/activity",
       "tokenOhlcv": "/tgm/token-ohlcv",
       "account": "/account"
     },

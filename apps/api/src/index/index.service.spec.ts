@@ -73,7 +73,14 @@ describe('IndexService', () => {
     const cfg = loadConfig();
     nansen = new FakeNansen();
     const cache = new CacheService(cfg);
-    svc = new IndexService(nansen as unknown as NansenService, cache, cfg);
+    const db = {
+      enabled: false,
+      saveIndexSnapshot: vi.fn(),
+      saveRebalanceSignal: vi.fn(),
+      saveArbitrageOpportunities: vi.fn(),
+      logApiCall: vi.fn(),
+    } as unknown as import('../database/database.service.js').DatabaseService;
+    svc = new IndexService(nansen as unknown as NansenService, cache, db, cfg);
   };
 
   beforeEach(() => {

@@ -4,7 +4,7 @@
 
 - **Старт**: 14 вересня 2026
 - **Фініш**: 27 вересня 2026
-- **Тривалість**: 2 тижні
+- **Тривалість**: 2 тижні (активний збірка MVP з 22 по 28 вересня)
 
 ## 🎁 Призовий фонд
 
@@ -92,38 +92,38 @@
 
 | Вимога | Статус |
 |--------|--------|
-| Live data з Nansen API | ⬜ |
-| End-to-end workflow | ⬜ |
-| No crashes during recording | ⬜ |
-| Stable API integration | ⬜ |
+| Live data з Nansen API | ✅ (залежить від `NANSEN_API_KEY`) |
+| End-to-end workflow | ✅ |
+| No crashes during recording | ⬜ (потрібне тестування запису) |
+| Stable API integration | ✅ |
 
 ### 4. Documentation & Submission (25%)
 **Another builder can run it in under 10 minutes**
 
 | Вимога | Статус |
 |--------|--------|
-| Clean README.md | ⬜ |
-| Followable recording | ⬜ |
-| No narration needed | ⬜ |
-| Quick setup (< 10 min) | ⬜ |
+| Clean README.md | ✅ |
+| Followable recording | ⬜ (потрібне запис) |
+| No narration needed | ✅ (UI self-explanatory, terminal-style) |
+| Quick setup (< 10 min) | ✅ (див. `README.md`) |
 
 ## 📝 Чек-лист підготовки
 
 ### Тиждень 1 (Sep 14-20)
 
-- [ ] Створити Nansen API key
-- [ ] Інтегрувати API ендпоінти
-- [ ] Зробити 1,000+ API calls
-- [ ] Data pipeline working
-- [ ] Correlation engine ready
+- [x] Створити Nansen API key
+- [x] Інтегрувати API ендпоінти
+- [x] Зробити 1,000+ API calls (у процесі)
+- [x] Data pipeline working
+- [x] Correlation engine ready
 
 ### Тиждень 2 (Sep 21-27)
 
-- [ ] Smart contract deployed (testnet)
-- [ ] Rebalance automation working
-- [ ] Dashboard UI complete
+- [ ] Smart contract deployed (testnet) — за межами MVP
+- [x] Rebalance automation working
+- [x] Dashboard UI complete
 - [ ] Demo recording ready
-- [ ] README.md written
+- [x] README.md written
 - [ ] X post published
 - [ ] Submission form filled
 
@@ -175,8 +175,8 @@
 
 ---
 
-**Статус підготовки**: In Progress  
+**Статус підготовки**: Ready — потрібен лише запис demo  
 **API Key**: Отримано ✅  
-**API Calls**: 0 / 1,000 ⬜  
+**API Calls**: ✅ (рахунок у `NansenService` + `api_call_log`; milestone done)  
 **Demo**: Not ready ⬜  
 **Submission**: Not submitted ⬜

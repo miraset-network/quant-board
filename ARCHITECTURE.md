@@ -1,3 +1,11 @@
+# ⚠️ ARCHIVED — ARCHITECTURE.md
+
+> This document describes the **original Express + Next.js 14 design** from the first day of the hackathon. The actual implementation diverged significantly to **NestJS 12 + Next.js 16 + React 19 + Tailwind 4**. Treat this file as historical context only.
+>
+> For the authoritative current state, see [`AGENTS.md`](./AGENTS.md) and the code in `apps/api/` and `apps/web/`.
+
+---
+
 # FOMO Indexes — Архітектура системи (Monorepo)
 
 ##  System Overview

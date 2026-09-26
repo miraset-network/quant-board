@@ -1,41 +1,12 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
+import { type BacktestResult } from '@quant-board/shared';
 import { APP_CONFIG } from '../config/config.js';
 import type { AppConfigShape } from '../config/config.js';
 import { IndexService } from '../index/index.service.js';
 import { NansenService, OhlcvCandle } from '../nansen/nansen.service.js';
 
-export type BacktestStatus = 'ok' | 'no-data' | 'nansen-error';
-
-export interface BacktestPoint {
-  date: string;
-  nav: number;
-}
-
-export interface BacktestLeg {
-  symbol: string;
-  weight: number;
-  returnPct: number;
-  candles: number;
-}
-
-export interface BacktestResult {
-  status: BacktestStatus;
-  message: string | null;
-  days: number;
-  windowStart: string;
-  windowEnd: string;
-  universeSize: number;
-  requestedSize: number;
-  startNav: number;
-  endNav: number;
-  returnPct: number;
-  maxDrawdownPct: number;
-  bestDay: { date: string; pct: number } | null;
-  worstDay: { date: string; pct: number } | null;
-  series: BacktestPoint[];
-  legs: BacktestLeg[];
-  generatedAt: string;
-}
+export type { BacktestResult } from '@quant-board/shared';
+import { type BacktestPoint, type BacktestLeg } from '@quant-board/shared';
 
 interface CacheEntry {
   key: string;

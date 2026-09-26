@@ -19,7 +19,8 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@quant-board/shared": ["../../packages/shared/dist/index.d.ts"]
     }
   },
   "include": [

@@ -1,3 +1,11 @@
+# ⚠️ ARCHIVED — PLAN.md
+
+> This document is the **original day-by-day implementation plan** written before coding started. The project was delivered with a different stack and different features than planned here (NestJS 12 + Next.js 16, plus backtest, token details, risk indicators, and Nansen credits endpoints that are not mentioned below). Use it as a historical sprint snapshot only.
+>
+> For the authoritative current state, see [`AGENTS.md`](./AGENTS.md) and the code in `apps/api/` and `apps/web/`.
+
+---
+
 # FOMO Indexes — План імплементації (1 тиждень)
 
 ## Tech Stack

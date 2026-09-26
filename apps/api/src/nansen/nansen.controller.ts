@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Query } from '@nestjs/common';
 import { NansenService } from './nansen.service.js';
 
 @Controller('api/nansen')
@@ -22,5 +22,22 @@ export class NansenController {
       successfulCalls: this.nansen.getSuccessCount(),
       lastError: this.nansen.getLastError(),
     };
+  }
+
+  @Get('wallet-activity')
+  async walletActivity(@Query('chain') chain?: string) {
+    try {
+      const data = await this.nansen.getWalletActivity({
+        chain: chain || undefined,
+      });
+      return { status: 'ok', data: data.data ?? [], pagination: data.pagination ?? null };
+    } catch (err) {
+      return {
+        status: 'error',
+        message: err instanceof Error ? err.message : 'unknown error',
+        data: [],
+        pagination: null,
+      };
+    }
   }
 }

@@ -1,3 +1,11 @@
+# ⚠️ ARCHIVED — IDEA.md
+
+> This document is the **original product idea / pitch** written before the hackathon build. The MVP that was actually built differs in stack (NestJS, not Express), response shapes, and endpoints. Use it to understand the origin of the project, not the current API contract.
+>
+> For the authoritative current state, see [`AGENTS.md`](./AGENTS.md), the actual controllers in `apps/api/src/`, and the dashboard in `apps/web/components/Dashboard.tsx`.
+
+---
+
 # FOMO Indexes — Ребаланс портфеля на основі Nansen Analytics
 
 ## 🎯 Проблема
