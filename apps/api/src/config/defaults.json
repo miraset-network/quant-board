@@ -19,6 +19,8 @@
   "index": {
     "name": "Top Smart Money Netflow",
     "topN": 50,
+    "minMarketCapUsd": 100000,
+    "minTokenAgeDays": 7,
     "scoring": {
       "netflowWeight": 0.5,
       "traderCountWeight": 0.3,
@@ -40,6 +42,9 @@
       "nansenEmpty": "Nansen returned no netflow data",
       "nansenError": "Nansen API error"
     }
+  },
+  "backtest": {
+    "minCandles": 30
   },
   "arbitrage": {
     "topN": 50,

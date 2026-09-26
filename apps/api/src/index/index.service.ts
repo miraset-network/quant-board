@@ -76,7 +76,11 @@ export class IndexService {
         tokens = [];
       } else {
         nansenRows = raw;
-        tokens = raw.map((r) => this.netflowRowToToken(r));
+        const minMcap = this.cfg.index.minMarketCapUsd;
+        const minAge = this.cfg.index.minTokenAgeDays;
+        tokens = raw
+          .map((r) => this.netflowRowToToken(r))
+          .filter((t) => (t.marketCapUsd ?? 0) >= minMcap && (t.tokenAgeDays ?? 0) >= minAge);
       }
     } catch (err) {
       const detail = err instanceof Error ? err.message : 'unknown error';

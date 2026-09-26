@@ -18,6 +18,11 @@
 - `src/cache/` — in-memory + optional Redis cache
 - `src/database/` — optional PostgreSQL persistence
 
+## Index & Backtest Filters
+
+- **Index universe**: tokens filtered by `minMarketCapUsd` (default $100K) and `minTokenAgeDays` (default 7) in `defaults.json`
+- **Backtest**: tokens must have `backtest.minCandles` (default 30) daily candles to be included — prevents micro-cap launch-price pumps from dominating NAV
+
 ## Quirks
 
 - **ESM + `module: nodenext`**: relative imports need explicit `.js` extensions (e.g. `import { AppModule } from './app.module.js'`). Omitting it compiles/fails confusingly.

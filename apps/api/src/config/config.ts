@@ -27,6 +27,8 @@ export interface AppConfigShape {
   index: {
     name: string;
     topN: number;
+    minMarketCapUsd: number;
+    minTokenAgeDays: number;
     scoring: {
       netflowWeight: number;
       traderCountWeight: number;
@@ -48,6 +50,9 @@ export interface AppConfigShape {
       nansenEmpty: string;
       nansenError: string;
     };
+  };
+  backtest: {
+    minCandles: number;
   };
   arbitrage: {
     topN: number;

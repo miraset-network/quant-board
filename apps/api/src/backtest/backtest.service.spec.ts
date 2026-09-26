@@ -96,8 +96,9 @@ describe('BacktestService', () => {
       { symbol: 'A', weight: 50 },
       { symbol: 'B', weight: 50 },
     ]);
-    const closesA = [10, 11, 12, 13];
-    const closesB = [20, 22, 24, 26];
+    // Generate 30 candles: A goes 10→19 (+90%), B goes 20→38 (+90%)
+    const closesA = Array.from({ length: 30 }, (_, i) => 10 + i * 0.31);
+    const closesB = Array.from({ length: 30 }, (_, i) => 20 + i * 0.62);
     const svc = new BacktestService(
       fakeIndex(idx) as IndexService,
       fakeNansen({
@@ -114,10 +115,10 @@ describe('BacktestService', () => {
     );
     const out = await svc.run(30);
     expect(out.status).toBe('ok');
-    expect(out.series.length).toBe(closesA.length);
+    expect(out.series.length).toBe(30);
     expect(out.startNav).toBe(1);
-    const lastRetA = (closesA[3] - closesA[0]) / closesA[0];
-    const lastRetB = (closesB[3] - closesB[0]) / closesB[0];
+    const lastRetA = (closesA[29] - closesA[0]) / closesA[0];
+    const lastRetB = (closesB[29] - closesB[0]) / closesB[0];
     const expectedEnd = (lastRetA + lastRetB) / 2 + 1;
     expect(Math.abs(out.endNav - Number(expectedEnd.toFixed(4)))).toBeLessThan(0.001);
     expect(out.returnPct).toBeGreaterThan(0);
@@ -131,8 +132,9 @@ describe('BacktestService', () => {
       { symbol: 'A', weight: 50 },
       { symbol: 'B', weight: 50 },
     ]);
-    const closesA = [10, 12, 9, 11];
-    const closesB = [20, 22, 18, 25];
+    // 30 candles with ups and downs
+    const closesA = [10, 12, 9, 11, 13, 10, 8, 14, 12, 10, 11, 13, 9, 7, 12, 14, 11, 10, 13, 15, 12, 10, 9, 11, 13, 10, 8, 12, 14, 11];
+    const closesB = [20, 22, 18, 25, 24, 20, 19, 23, 21, 20, 22, 24, 19, 17, 22, 25, 21, 20, 23, 26, 22, 20, 19, 21, 23, 20, 18, 22, 25, 21];
     const svc = new BacktestService(
       fakeIndex(idx) as IndexService,
       fakeNansen({
@@ -159,19 +161,21 @@ describe('BacktestService', () => {
   it('tags daily return to the previous day, not the current nav day', async () => {
     const cfg = loadConfig();
     const idx = makeIndexState([{ symbol: 'A', weight: 100 }]);
+    // 30 candles: day 0→1 is +100%, day 1→2 is -75%
+    const closes = [10, 20, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5];
     const svc = new BacktestService(
       fakeIndex(idx) as IndexService,
       fakeNansen({
         getOhlcvBatch: vi.fn(async () => ({
           chain: 'solana',
           timeframe: '1d',
-          tokens: [{ token_address: '0xa0', data: candleRow([10, 20, 5]) }],
+          tokens: [{ token_address: '0xa0', data: candleRow(closes) }],
         })),
       }) as NansenService,
       cfg,
     );
     const out = await svc.run(30);
-    expect(out.series).toHaveLength(3);
+    expect(out.series).toHaveLength(30);
     expect(out.dailyReturns ?? out.bestDay).toBeTruthy();
     // Day 0 -> day 1 is +100%, attributed to day 0; day 1 -> day 2 is -75%, attributed to day 1.
     expect(out.bestDay!.pct).toBe(100);
@@ -185,6 +189,7 @@ describe('BacktestService', () => {
       { symbol: 'A', weight: 50 },
       { symbol: 'B', weight: 50 },
     ]);
+    // Only 2 candles → below minCandles threshold → no data
     const svc = new BacktestService(
       fakeIndex(idx) as IndexService,
       fakeNansen({
@@ -200,19 +205,20 @@ describe('BacktestService', () => {
       cfg,
     );
     const out = await svc.run(30);
-    expect(out.status).toBe('ok');
+    // Tokens with < minCandles are excluded → no-data status
+    expect(out.status).toBe('no-data');
     expect(out.bestDay).toBeNull();
     expect(out.worstDay).toBeNull();
   });
 
-  it('handles tokens with fewer candles than maxLen without NaN in NAV', async () => {
+  it('excludes tokens with fewer than minCandles from backtest', async () => {
     const cfg = loadConfig();
     const idx = makeIndexState([
       { symbol: 'A', weight: 50 },
       { symbol: 'B', weight: 50 },
     ]);
-    const closesA = [10, 11, 12, 13]; // 4 candles
-    const closesB = [20, 21]; // only 2 candles
+    const closesA = Array.from({ length: 30 }, (_, i) => 10 + i * 0.1); // 30 candles
+    const closesB = [20, 21]; // only 2 candles → below minCandles
     const svc = new BacktestService(
       fakeIndex(idx) as IndexService,
       fakeNansen({
@@ -228,25 +234,20 @@ describe('BacktestService', () => {
       cfg,
     );
     const out = await svc.run(30);
+    // Only token A has enough candles → backtest runs with 1 token
     expect(out.status).toBe('ok');
-    expect(out.series).toHaveLength(4);
+    expect(out.series).toHaveLength(30);
+    expect(out.legs).toHaveLength(1);
+    expect(out.legs[0].symbol).toBe('A');
     // Every NAV must be a finite number — no NaN
     for (const pt of out.series) {
       expect(Number.isFinite(pt.nav)).toBe(true);
     }
-    // Day 0: both tokens valid → NAV = 1.0
+    // NAV tracks A: 10 → 12.9 over 30 candles
     expect(out.series[0].nav).toBe(1);
-    // Day 1: both tokens valid → NAV = avg(11/10, 21/20) = avg(1.1, 1.05) = 1.075
-    expect(out.series[1].nav).toBeCloseTo(1.075, 3);
-    // Day 2: only A valid → NAV = 12/10 = 1.2
-    expect(out.series[2].nav).toBeCloseTo(1.2, 3);
-    // Day 3: only A valid → NAV = 13/10 = 1.3
-    expect(out.series[3].nav).toBeCloseTo(1.3, 3);
+    expect(out.series[29].nav).toBeCloseTo(1.29, 2);
     expect(Number.isFinite(out.endNav)).toBe(true);
-    expect(out.endNav).toBeCloseTo(1.3, 3);
     expect(Number.isFinite(out.returnPct)).toBe(true);
-    expect(out.returnPct).toBeCloseTo(30, 1);
-    expect(out.maxDrawdownPct).toBe(0);
   });
 
   it('clamps days to [1, 90] range', async () => {

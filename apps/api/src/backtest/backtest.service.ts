@@ -104,11 +104,12 @@ export class BacktestService {
       }
     }
 
+    const minCandles = this.cfg.backtest.minCandles;
     const payloads = new Map<string, LegPayload>();
     for (const r of requested) {
       const raw = candlesByAddr.get(r.address) ?? [];
       const closes = this.extractCloses(raw);
-      if (closes.length >= 2) {
+      if (closes.length >= minCandles) {
         payloads.set(r.symbol, { closes, weight: r.weight, symbol: r.symbol });
       }
     }
