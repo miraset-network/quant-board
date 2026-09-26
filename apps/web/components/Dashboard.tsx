@@ -271,14 +271,14 @@ export default function Dashboard() {
           {arb && arb.opportunities.length > 0 ? (
             <table className="w-full text-xs">
               <thead className="text-green-600">
-                <tr><th className="text-left">PAIR</th><th className="text-right">CORR</th><th className="text-right">DIV%</th><th className="text-left">SIGNAL</th><th className="text-right">EST</th></tr>
+                <tr><th className="text-left">PAIR</th><th className="text-right">CORR</th><th className="text-right pr-3">DIV%</th><th className="text-left">SIGNAL</th><th className="text-right">EST</th></tr>
               </thead>
               <tbody>
                 {arb.opportunities.map((o) => (
                   <tr key={o.pair} className="border-t border-green-950">
                     <td className="text-cyan-300">{o.pair}</td>
                     <td className="text-right">{o.correlation}</td>
-                    <td className="text-right text-amber-400">{o.divergence}</td>
+                    <td className="text-right text-amber-400 pr-3">{o.divergence}</td>
                     <td>{o.signal}</td>
                     <td className="text-right">{o.expectedReturn}</td>
                   </tr>
