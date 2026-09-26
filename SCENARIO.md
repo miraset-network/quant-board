@@ -40,7 +40,7 @@ Voiceover:
 - Smart Money inflow badges lighting up
 
 **VO:**
-> *"FOMO Indexes is a weekly-rebalancing index engine, powered by **Nansen Analytics**. It selects top tokens by Smart Money inflow, adjusts weights using a correlation matrix, and flags arbitrage between similar assets — automatically."*
+> *"FOMO Indexes is a daily-rebalancing index engine, powered by **Nansen Analytics**. It selects top tokens by Smart Money inflow, adjusts weights using a correlation matrix, and flags arbitrage between similar assets — automatically."*
 
 **On-screen text (badges pop over the UI):**
 - `✅ Top tokens by Smart Money`

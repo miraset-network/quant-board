@@ -15,7 +15,30 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "FOMO Indexes — Smart Money Index Engine",
   description:
-    "Weekly-rebalancing crypto index powered by Nansen Analytics. Smart Money inflow rankings, correlation-adjusted weights, and statistical arbitrage signals.",
+    "Daily-rebalancing crypto index powered by Nansen Analytics. Smart Money inflow rankings, correlation-adjusted weights, and statistical arbitrage signals.",
+  keywords: ["crypto index", "smart money", "Nansen", "DeFi", "onchain analytics", "arbitrage", "quantitative"],
+  authors: [{ name: "FOMO Indexes" }],
+  creator: "FOMO Indexes",
+  metadataBase: new URL("https://fomo-indexes.vercel.app"),
+  openGraph: {
+    title: "FOMO Indexes — Smart Money Index Engine",
+    description:
+      "Daily-rebalancing crypto index powered by Nansen Analytics. Smart Money inflow rankings, correlation-adjusted weights, and statistical arbitrage signals.",
+    url: "/",
+    siteName: "FOMO Indexes",
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "FOMO Indexes — Smart Money Index Engine",
+    description:
+      "Daily-rebalancing crypto index powered by Nansen Analytics. Smart Money inflow rankings, correlation-adjusted weights, and statistical arbitrage signals.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
