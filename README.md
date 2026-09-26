@@ -20,6 +20,22 @@ bun run dev
 
 Open http://localhost:3000.
 
+## Docker
+
+Full stack (Postgres + Redis + API + web) is dockerized:
+
+```bash
+cp .env.example .env
+# edit .env and add NANSEN_API_KEY
+
+docker compose up --build
+```
+
+- Web: http://localhost:3000, API: http://localhost:3001
+- `DATABASE_URL` / `REDIS_URL` are wired automatically to the `postgres` / `redis` services.
+- `NEXT_PUBLIC_API_URL` is baked into the web image at build time (build arg); it defaults to `http://localhost:3001`, which works when the browser reaches the API via the published host port.
+- Images are multi-stage (`oven/bun:1.4.2`): deps → build → slim runtime. Dockerfiles live in `apps/api/Dockerfile` and `apps/web/Dockerfile`.
+
 ## API endpoints
 
 | Method | Endpoint | Description |
