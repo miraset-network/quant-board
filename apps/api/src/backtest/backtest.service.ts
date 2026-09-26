@@ -175,7 +175,7 @@ export class BacktestService {
       for (const p of payloadsAligned.values()) {
         const close = p.closes[i];
         const base = p.closes[0];
-        if (base <= 0 || close <= 0) continue;
+        if (typeof close !== 'number' || !Number.isFinite(close) || base <= 0 || close <= 0) continue;
         const ret = close / base;
         const w = p.weight / totalW;
         weightedSum += w * ret;
