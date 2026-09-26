@@ -156,6 +156,29 @@ describe('BacktestService', () => {
     expect(out.maxDrawdownPct).toBeGreaterThan(0);
   });
 
+  it('tags daily return to the previous day, not the current nav day', async () => {
+    const cfg = loadConfig();
+    const idx = makeIndexState([{ symbol: 'A', weight: 100 }]);
+    const svc = new BacktestService(
+      fakeIndex(idx) as IndexService,
+      fakeNansen({
+        getOhlcvBatch: vi.fn(async () => ({
+          chain: 'solana',
+          timeframe: '1d',
+          tokens: [{ token_address: '0xa0', data: candleRow([10, 20, 5]) }],
+        })),
+      }) as NansenService,
+      cfg,
+    );
+    const out = await svc.run(30);
+    expect(out.series).toHaveLength(3);
+    expect(out.dailyReturns ?? out.bestDay).toBeTruthy();
+    // Day 0 -> day 1 is +100%, attributed to day 0; day 1 -> day 2 is -75%, attributed to day 1.
+    expect(out.bestDay!.pct).toBe(100);
+    expect(out.worstDay!.pct).toBe(-75);
+    expect(out.bestDay!.date).not.toBe(out.worstDay!.date);
+  });
+
   it('returns null best/worst when only one daily return exists', async () => {
     const cfg = loadConfig();
     const idx = makeIndexState([

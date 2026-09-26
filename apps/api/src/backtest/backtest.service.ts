@@ -160,7 +160,7 @@ export class BacktestService {
     const payloadsAligned = alignedPayloads;
     const alignedLength = maxLen;
 
-    const dates = this.backDateLabels(alignedLength, toIso);
+    const dateLabels = this.backDateLabels(alignedLength, toIso);
     const series: BacktestPoint[] = [];
     const dailyReturns: { date: string; pct: number }[] = [];
     let startNav = 1;
@@ -183,7 +183,7 @@ export class BacktestService {
       }
       if (weightUsed === 0) continue;
       const nav = Number((weightedSum / weightUsed).toFixed(6));
-      const date = dates[i];
+      const date = dateLabels[i];
       series.push({ date, nav });
 
       if (i === 0) {
@@ -191,7 +191,7 @@ export class BacktestService {
         prevNav = nav;
       } else {
         const pct = ((nav - prevNav) / prevNav) * 100;
-        dailyReturns.push({ date, pct });
+        dailyReturns.push({ date: dateLabels[i - 1], pct });
         prevNav = nav;
       }
       if (nav > peak) peak = nav;
@@ -231,8 +231,8 @@ export class BacktestService {
       status: 'ok',
       message: null,
       days: safeDays,
-      windowStart: dates[0] ?? fromIso,
-      windowEnd: dates[dates.length - 1] ?? toIso,
+      windowStart: dateLabels[0] ?? fromIso,
+      windowEnd: dateLabels[dateLabels.length - 1] ?? toIso,
       universeSize: payloads.size,
       requestedSize: requested.length,
       startNav: Number(startNav.toFixed(4)),
