@@ -10,7 +10,7 @@
     "defaults": {
       "requestTimeoutMs": 15000,
       "smartMoneyChains": ["ethereum", "solana"],
-      "smartMoneyPerPage": 20,
+      "smartMoneyPerPage": 50,
       "smartMoneyPage": 1,
       "ohlcvTimeframe": "1d",
       "ohlcvLookbackDays": 30
@@ -18,7 +18,7 @@
   },
   "index": {
     "name": "Top Smart Money Netflow",
-    "topN": 10,
+    "topN": 50,
     "scoring": {
       "netflowWeight": 0.5,
       "traderCountWeight": 0.3,
@@ -42,7 +42,7 @@
     }
   },
   "arbitrage": {
-    "topN": 8,
+    "topN": 50,
     "minCandles": 5,
     "statArb": {
       "zEntryThreshold": 1.5,

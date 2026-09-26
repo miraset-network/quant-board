@@ -224,7 +224,7 @@ export default function Dashboard() {
               </tr>
             </thead>
             <tbody>
-              {index?.tokens.slice(0, 10).map((t, i) => {
+              {index?.tokens.slice(0, 50).map((t, i) => {
                 const href = t.chain && t.tokenAddress ? `/token/${t.chain}/${t.tokenAddress}` : null;
                 const flow = t.netflow24hUsd ?? 0;
                 return (
