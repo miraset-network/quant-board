@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "FOMO Indexes — a daily-rebalancing, Nansen-powered smart-money crypto index engine with a Next.js dashboard.",
   "private": true,
-  "license": "MIT",
+  "license": "Apache-2.0",
   "author": "Miraset Network Dev <dev@miraset.network>",
   "repository": {
     "type": "git",
@@ -31,7 +31,7 @@
     "postinstall": "[ -n \"$QUANT_BOARD_POSTINSTALL\" ] || { export QUANT_BOARD_POSTINSTALL=1; for d in apps/api apps/web packages/shared; do [ -f \"$d/package.json\" ] && (cd \"$d\" && bun install); done; }"
   },
   "devDependencies": {
-    "@miraset-network/agents-config": "^1.2.1",
+    "@daochild/agents-config": "^1.2.1",
     "@opencode-ai/sdk": "^1.18.32",
     "turbo": "^2.1.0"
   },

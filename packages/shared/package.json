@@ -1,6 +1,8 @@
 {
   "name": "@quant-board/shared",
   "version": "1.0.1",
+  "license": "Apache-2.0",
+  "author": "Miraset Network Dev <dev@miraset.network>",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
