@@ -105,6 +105,7 @@ export default function Dashboard() {
   const [bt, setBt] = useState<Backtest | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [clock, setClock] = useState('');
+  const [egg, setEgg] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -297,8 +298,31 @@ export default function Dashboard() {
       </main>
 
       <footer className="border-t border-green-800 px-6 py-2 text-center text-xs text-green-700">
-        ⟳ auto-refresh 30s (backtest 5m) · backend: :3001 · Nansen-powered
+        <span className="mr-1">⟳ auto-refresh 30s (backtest 5m) · backend: :3001 · Nansen-powered · made with</span>
+        <button
+          type="button"
+          aria-label="Secret egg"
+          onClick={() => setEgg(true)}
+          className="inline cursor-pointer select-none align-middle text-green-600 transition-colors hover:text-amber-400"
+        >
+          🥚
+        </button>
       </footer>
+
+      {egg && (
+        <section className="px-6 pb-6">
+          <div className="border border-green-800 bg-black/60 p-4">
+            <h2 className="mb-3 border-b border-green-900 pb-2 text-sm tracking-widest text-green-500">
+              DEMO MODE
+            </h2>
+            <img
+              src="/1790270825650.jpeg"
+              alt="Claude: This project will take 3 months. Me: You have 3 hours."
+              className="mx-auto max-h-[420px] w-auto border border-green-900"
+            />
+          </div>
+        </section>
+      )}
     </div>
   );
 }
